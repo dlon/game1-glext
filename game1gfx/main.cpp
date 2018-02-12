@@ -30,20 +30,25 @@ static PyObject* spam_testvoid(PyObject *self, PyObject *args)
 	//Py_RETURN_NONE;
 }
 
+#include <Windows.h>
+#include <gl/GL.h>
+
 static PyObject* spam_setclearcolor(PyObject *self, PyObject *args)
 {
 	float r, g, b, a;
 	if (!PyArg_ParseTuple(args, "ffff", &r, &g, &b, &a))
 		return NULL;
 
-	printf("%f %f %f %f\n", r, g, b, a);
+	printf("set color: %f %f %f %f\n", r, g, b, a);
+	glClearColor(r, g, b, a);
 
 	Py_RETURN_NONE;
 }
 
 static PyObject* spam_clear(PyObject *self, PyObject *args)
 {
-	puts("clearing");
+	//puts("clearing");
+	glClear(GL_COLOR_BUFFER_BIT);
 	Py_RETURN_NONE;
 }
 
@@ -55,6 +60,7 @@ static PyObject* spam_setviewport(PyObject *self, PyObject *args)
 		return NULL;
 
 	printf("setviewport: %d %d %u %u\n", x, y, w, h);
+	glViewport(x, y, w, h);
 
 	Py_RETURN_NONE;
 }
