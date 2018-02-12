@@ -1,7 +1,9 @@
 #include <Windows.h>
 #include <gl/GL.h>
+#include <gl/GLU.h>
 #include "glutil.hpp"
 #include <stdio.h>
+#include <assert.h>
 
 void (*glEnableVertexAttribArray)(GLuint index) = NULL;
 void(*glVertexAttribPointer)(GLuint index,
@@ -95,6 +97,4 @@ void loadGLFunctions() {
 		GLfloat v1,
 		GLfloat v2,
 		GLfloat v3))wglGetProcAddress("glUniform4f");
-	
-	puts("Loaded gl functions");
 }

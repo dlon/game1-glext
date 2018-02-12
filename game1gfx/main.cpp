@@ -72,6 +72,8 @@ static struct PyModuleDef glextModule = {
 	methods
 };
 
+#include "batch.hpp"
+
 PyMODINIT_FUNC
 PyInit_glrenderer(void)
 {

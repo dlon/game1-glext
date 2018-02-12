@@ -2,6 +2,7 @@
 #include <gl/GL.h>
 #include "batch.hpp"
 #include "glutil.hpp"
+#include <vector>
 
 const char vertexShaderSource[] = R"(#version 440
 
@@ -65,8 +66,37 @@ void Batch::setupShaders() {
 	glEnableVertexAttribArray(colorAttribute);
 }
 
-Batch::Batch() {
+void Batch::createBuffers() {
+	std::vector<size_t> indices(4 * maxBatchSize);
+
+	for (int i = 0; i < maxBatchSize; i++) {
+		// TODO: pre-generate this
+		indices.push_back(4 * i + 0);
+		indices.push_back(4 * i + 2);
+		indices.push_back(4 * i + 1);
+		indices.push_back(4 * i + 2);
+		indices.push_back(4 * i + 1);
+		indices.push_back(4 * i + 3);
+	}
+
+	glGenBuffers(1, &indexVbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVbo);
+	glBufferData(
+		GL_ELEMENT_ARRAY_BUFFER,
+		sizeof(size_t) * indices.size(),
+		&indices[0],
+		GL_STATIC_DRAW
+	);
+}
+
+Batch::Batch(size_t maxBatchSize) {
 	setupShaders();
+	
+	this->maxBatchSize = maxBatchSize;
+	objectIndex = 0;
+	currentTexture = NULL;
+
+	createBuffers();
 }
 
 Batch::~Batch() {
