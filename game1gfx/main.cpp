@@ -1,4 +1,5 @@
 #include <Python.h>
+#include "glutil.hpp"
 
 /*__declspec(dllexport) void test(int a) {
 	printf("%d\n", a);
@@ -116,5 +117,8 @@ PyInit_spam(void)
 	SpamError = PyErr_NewException("spam.error", NULL, NULL);
 	Py_INCREF(SpamError);
 	PyModule_AddObject(m, "error", SpamError);
+
+	loadGLFunctions();
+
 	return m;
 }
