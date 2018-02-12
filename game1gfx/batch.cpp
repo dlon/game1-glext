@@ -3,7 +3,7 @@
 #include "batch.hpp"
 #include "glutil.hpp"
 
-const char* vertexShader = R"(#version 440
+const char* vertexShaderSource = R"(#version 440
 
 layout(location = 0) uniform mat3 vpMatrix;
 layout(location = 2) uniform mat3 mMatrix;
@@ -21,7 +21,7 @@ void main(void) {
 	vertColor = vVertColor;
 })";
 
-const char* fragmentShader = R"(#version 440
+const char* fragmentShaderSource = R"(#version 440
     
 layout (location = 3) uniform vec4 colorUniform;
 
@@ -35,9 +35,13 @@ void main(void) {
 
 
 void Batch::setupShaders() {
-	//glEnableVertexAttribArray();
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
 }
 
 Batch::Batch() {
+	setupShaders();
+}
+
+Batch::~Batch() {
 
 }
