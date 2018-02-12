@@ -14,9 +14,11 @@ void(*glVertexAttribPointer)(GLuint index,
 GLint(*glGetAttribLocation)(GLuint program, const char *name) = NULL;
 GLint(*glGetUniformLocation)(GLuint program, const char *name) = NULL;
 
+GLuint(*glCreateProgram)() = NULL;
 void(*glUseProgram)(GLuint program) = NULL;
 void(*glLinkProgram)(GLuint program) = NULL;
 void(*glDeleteProgram)(GLuint program) = NULL;
+
 GLuint(*glCreateShader)(GLenum shaderType) = NULL;
 void(*glShaderSource)(GLuint shader,
 	GLsizei count,
@@ -32,7 +34,7 @@ void(*glDeleteBuffers)(GLsizei n, const GLuint * buffers) = NULL;
 void(*glGenBuffers)(GLsizei n, GLuint * buffers) = NULL;
 void(*glBindBuffer)(GLenum target, GLuint buffer) = NULL;
 void(*glBufferData)(GLenum target,
-	ptrdiff_t size,
+	GLsizeiptr size,
 	const GLvoid * data,
 	GLenum usage) = NULL;
 
@@ -41,6 +43,11 @@ void (*glUniformMatrix3fv)(GLint location,
 	GLboolean transpose,
 	const GLfloat *value) = NULL;
 void (*glUniform1f)(GLint location, GLfloat v0) = NULL;
+void(*glUniform4f)(GLint location,
+	GLfloat v0,
+	GLfloat v1,
+	GLfloat v2,
+	GLfloat v3) = NULL;
 
 void loadGLFunctions() {
 	glEnableVertexAttribArray = (void(*)(GLuint))wglGetProcAddress("glEnableVertexAttribArray");
@@ -54,9 +61,11 @@ void loadGLFunctions() {
 	glGetAttribLocation = (GLint(*)(GLuint, const char*))wglGetProcAddress("glGetAttribLocation");
 	glGetUniformLocation = (GLint(*)(GLuint, const char*))wglGetProcAddress("glGetUniformLocation");
 	
+	glCreateProgram = (GLuint(*)())wglGetProcAddress("glCreateProgram");
 	glUseProgram = (void(*)(GLuint))wglGetProcAddress("glUseProgram");
 	glLinkProgram = (void(*)(GLuint))wglGetProcAddress("glLinkProgram");
 	glDeleteProgram = (void(*)(GLuint))wglGetProcAddress("glDeleteProgram");
+	
 	glCreateShader = (GLuint(*)(GLenum))wglGetProcAddress("glCreateShader");
 	glShaderSource = (void(*)(GLuint shader,
 		GLsizei count,
@@ -72,7 +81,7 @@ void loadGLFunctions() {
 	glGenBuffers = (void(*)(GLsizei, GLuint*))wglGetProcAddress("glGenBuffers");
 	glBindBuffer = (void(*)(GLenum target, GLuint buffer))wglGetProcAddress("glBindBuffer");
 	glBufferData = (void(*)(GLenum target,
-		ptrdiff_t size,
+		GLsizeiptr size,
 		const GLvoid * data,
 		GLenum usage))wglGetProcAddress("glBufferData");
 	
@@ -81,6 +90,11 @@ void loadGLFunctions() {
 		GLboolean transpose,
 		const GLfloat *value))wglGetProcAddress("glUniformMatrix3fv");
 	glUniform1f = (void(*)(GLint location, GLfloat v0))wglGetProcAddress("glUniform1f");
+	glUniform4f = (void(*)(GLint location,
+		GLfloat v0,
+		GLfloat v1,
+		GLfloat v2,
+		GLfloat v3))wglGetProcAddress("glUniform4f");
 	
 	puts("Loaded gl functions");
 }

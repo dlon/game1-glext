@@ -17,9 +17,11 @@ extern void(*glVertexAttribPointer)(GLuint index,
 extern GLint(*glGetAttribLocation)(GLuint program, const char *name);
 extern GLint(*glGetUniformLocation)(GLuint program, const char *name);
 
+extern GLuint(*glCreateProgram)();
 extern void(*glUseProgram)(GLuint program);
 extern void(*glLinkProgram)(GLuint program);
 extern void(*glDeleteProgram)(GLuint program);
+
 extern GLuint(*glCreateShader)(GLenum shaderType);
 extern void(*glShaderSource)(GLuint shader,
 	GLsizei count,
@@ -44,3 +46,8 @@ extern void(*glUniformMatrix3fv)(GLint location,
 	GLboolean transpose,
 	const GLfloat *value);
 extern void(*glUniform1f)(GLint location, GLfloat v0);
+extern void(*glUniform4f)(GLint location,
+	GLfloat v0,
+	GLfloat v1,
+	GLfloat v2,
+	GLfloat v3);

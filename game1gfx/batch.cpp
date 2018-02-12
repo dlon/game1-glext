@@ -3,7 +3,7 @@
 #include "batch.hpp"
 #include "glutil.hpp"
 
-const char* vertexShaderSource = R"(#version 440
+const char vertexShaderSource[] = R"(#version 440
 
 layout(location = 0) uniform mat3 vpMatrix;
 layout(location = 2) uniform mat3 mMatrix;
@@ -21,7 +21,7 @@ void main(void) {
 	vertColor = vVertColor;
 })";
 
-const char* fragmentShaderSource = R"(#version 440
+const char fragmentShaderSource[] = R"(#version 440
     
 layout (location = 3) uniform vec4 colorUniform;
 
@@ -35,7 +35,34 @@ void main(void) {
 
 
 void Batch::setupShaders() {
+	const char* vshaders[] = { vertexShaderSource };
+	const char* fshaders[] = { fragmentShaderSource };
+
+	program = glCreateProgram();
+
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(
+		vertexShader,
+		1,
+		vshaders,
+		NULL
+	);
+	glCompileShader(vertexShader);
+
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(
+		fragmentShader,
+		1,
+		fshaders,
+		NULL
+	);
+	glCompileShader(fragmentShader);
+
+	// TODO: error checking
+
+	glEnableVertexAttribArray(positionAttribute);
+	glEnableVertexAttribArray(texCoordAttribute);
+	glEnableVertexAttribArray(colorAttribute);
 }
 
 Batch::Batch() {
@@ -43,5 +70,7 @@ Batch::Batch() {
 }
 
 Batch::~Batch() {
-
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+	glDeleteProgram(program);
 }
