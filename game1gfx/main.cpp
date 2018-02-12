@@ -30,6 +30,35 @@ static PyObject* spam_testvoid(PyObject *self, PyObject *args)
 	//Py_RETURN_NONE;
 }
 
+static PyObject* spam_setclearcolor(PyObject *self, PyObject *args)
+{
+	float r, g, b, a;
+	if (!PyArg_ParseTuple(args, "ffff", &r, &g, &b, &a))
+		return NULL;
+
+	printf("%f %f %f %f\n", r, g, b, a);
+
+	Py_RETURN_NONE;
+}
+
+static PyObject* spam_clear(PyObject *self, PyObject *args)
+{
+	puts("clearing");
+	Py_RETURN_NONE;
+}
+
+static PyObject* spam_setviewport(PyObject *self, PyObject *args)
+{
+	int x, y;
+	size_t w, h;
+	if (!PyArg_ParseTuple(args, "iiII", &x, &y, &w, &h))
+		return NULL;
+
+	printf("setviewport: %d %d %u %u\n", x, y, w, h);
+
+	Py_RETURN_NONE;
+}
+
 // when a function fails, it should set an exception condition and return an error value (usually a NULL pointer)
 // Exceptions are stored in a static global variable inside the interpreter; if this variable is NULL no exception has occurred.
 // A second global variable stores the “associated value” of the exception (the second argument to raise).
@@ -52,7 +81,11 @@ static PyObject* spam_testvoid(PyObject *self, PyObject *args)
 
 static PyMethodDef SpamMethods[] = {
 	{ "system", spam_system, METH_VARARGS },
-	{ "testvoid", spam_testvoid, METH_VARARGS } // METH_NOARGS!?
+	{ "testvoid", spam_testvoid, METH_VARARGS }, // METH_NOARGS!?
+	{ "setviewport", spam_setviewport, METH_VARARGS },
+	{ "setclearcolor", spam_setclearcolor, METH_VARARGS },
+	{ "clear", spam_clear, METH_VARARGS },
+	0
 };
 // keyword arguments: use METH_KEYWORDS
 
