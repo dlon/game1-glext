@@ -16,6 +16,12 @@ void(*glUseProgram)(GLuint program) = NULL;
 void(*glActiveTexture)(GLenum texture) = NULL;
 void(*glDeleteBuffers)(GLsizei n, const GLuint * buffers) = NULL;
 void(*glGenBuffers)(GLsizei n, GLuint * buffers) = NULL;
+void (*glBindBuffer)(GLenum target, GLuint buffer) = NULL;
+void (*glUniformMatrix3fv)(GLint location,
+	GLsizei count,
+	GLboolean transpose,
+	const GLfloat *value) = NULL;
+void (*glUniform1f)(GLint location, GLfloat v0) = NULL;
 
 void loadGLFunctions() {
 	glEnableVertexAttribArray = (void(*)(GLuint))wglGetProcAddress("glEnableVertexAttribArray");
@@ -31,6 +37,12 @@ void loadGLFunctions() {
 	glActiveTexture = (void(*)(GLenum))wglGetProcAddress("glActiveTexture");
 	glDeleteBuffers = (void(*)(GLsizei, const GLuint*))wglGetProcAddress("glDeleteBuffers");
 	glGenBuffers = (void(*)(GLsizei, GLuint*))wglGetProcAddress("glGenBuffers");
+	glBindBuffer = (void(*)(GLenum target, GLuint buffer))wglGetProcAddress("glBindBuffer");
+	glUniformMatrix3fv = (void(*)(GLint location,
+		GLsizei count,
+		GLboolean transpose,
+		const GLfloat *value))wglGetProcAddress("glUniformMatrix3fv");
+	glUniform1f = (void(*)(GLint location, GLfloat v0))wglGetProcAddress("glUniform1f");
 	
 	puts("Loaded gl functions");
 }

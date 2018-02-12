@@ -18,3 +18,9 @@ extern void(*glUseProgram)(GLuint program);
 extern void(*glActiveTexture)(GLenum texture);
 extern void(*glDeleteBuffers)(GLsizei n, const GLuint * buffers);
 extern void(*glGenBuffers)(GLsizei n, GLuint * buffers);
+extern void(*glBindBuffer)(GLenum target, GLuint buffer);
+extern void(*glUniformMatrix3fv)(GLint location,
+	GLsizei count,
+	GLboolean transpose,
+	const GLfloat *value);
+extern void(*glUniform1f)(GLint location, GLfloat v0);
