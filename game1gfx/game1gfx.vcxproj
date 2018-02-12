@@ -80,7 +80,7 @@
     <LibraryPath>C:\Python35\libs;$(LibraryPath)</LibraryPath>
     <IncludePath>C:\Python35\include;$(IncludePath)</IncludePath>
     <TargetExt>.pyd</TargetExt>
-    <TargetName>spam</TargetName>
+    <TargetName>glrenderer</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -92,7 +92,7 @@
     <LibraryPath>C:\Python35\libs;$(LibraryPath)</LibraryPath>
     <IncludePath>C:\Python35\include;$(IncludePath)</IncludePath>
     <TargetExt>.pyd</TargetExt>
-    <TargetName>spam</TargetName>
+    <TargetName>glrenderer</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

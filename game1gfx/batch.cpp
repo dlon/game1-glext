@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <gl/GL.h>
 #include "batch.hpp"
+#include "glutil.hpp"
 
 const char* vertexShader = R"(#version 440
 

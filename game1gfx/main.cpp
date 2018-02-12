@@ -1,36 +1,5 @@
 #include <Python.h>
 #include "glutil.hpp"
-
-/*__declspec(dllexport) void test(int a) {
-	printf("%d\n", a);
-}*/
-
-static PyObject *SpamError;
-
-static PyObject *
-spam_system(PyObject *self, PyObject *args)
-{
-	const char *command;
-	int sts;
-
-	if (!PyArg_ParseTuple(args, "s", &command)) // raises an appropriate exception and returns 0 if it fails
-		return NULL;
-	sts = system(command);
-	if (sts < 0) {
-		PyErr_SetString(SpamError, "System command failed");
-		return NULL;
-	}
-	return PyLong_FromLong(sts);
-}
-
-// function returning void
-static PyObject* spam_testvoid(PyObject *self, PyObject *args)
-{
-	Py_INCREF(Py_None);
-	return Py_None;
-	//Py_RETURN_NONE;
-}
-
 #include <Windows.h>
 #include <gl/GL.h>
 
@@ -86,9 +55,7 @@ static PyObject* spam_setviewport(PyObject *self, PyObject *args)
 
 // method table and initialization function
 
-static PyMethodDef SpamMethods[] = {
-	{ "system", spam_system, METH_VARARGS },
-	{ "testvoid", spam_testvoid, METH_VARARGS }, // METH_NOARGS!?
+static PyMethodDef methods[] = {
 	{ "setviewport", spam_setviewport, METH_VARARGS },
 	{ "setclearcolor", spam_setclearcolor, METH_VARARGS },
 	{ "clear", spam_clear, METH_VARARGS },
@@ -96,27 +63,27 @@ static PyMethodDef SpamMethods[] = {
 };
 // keyword arguments: use METH_KEYWORDS
 
-static struct PyModuleDef spammodule = {
+static struct PyModuleDef glextModule = {
 	PyModuleDef_HEAD_INIT,
-	"spam",   /* name of module */
+	"glrenderer",   /* name of module */
 	NULL, /* module documentation, may be NULL */
 	-1,       /* size of per-interpreter state of the module,
 			  or -1 if the module keeps state in global variables. */
-	SpamMethods
+	methods
 };
 
 PyMODINIT_FUNC
-PyInit_spam(void)
+PyInit_glrenderer(void)
 {
 	PyObject *m;
 
-	m = PyModule_Create(&spammodule);
+	m = PyModule_Create(&glextModule);
 	if (m == NULL)
 		return NULL;
 
-	SpamError = PyErr_NewException("spam.error", NULL, NULL);
-	Py_INCREF(SpamError);
-	PyModule_AddObject(m, "error", SpamError);
+	//SpamError = PyErr_NewException("spam.error", NULL, NULL);
+	//Py_INCREF(SpamError);
+	//PyModule_AddObject(m, "error", SpamError);
 
 	loadGLFunctions();
 
