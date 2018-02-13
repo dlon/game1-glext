@@ -1,4 +1,5 @@
 #include <Python.h>
+#include <structmember.h>
 #include "glutil.hpp"
 #include <Windows.h>
 #include <gl/GL.h>
@@ -35,6 +36,91 @@ static PyObject* spam_setviewport(PyObject *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
+#include "batch.hpp"
+
+struct glrenderer_Batch {
+	PyObject_HEAD
+	int batchSize;
+	Batch* _object;
+};
+
+static PyObject* Batch_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+	glrenderer_Batch *self;
+	self = (glrenderer_Batch*)type->tp_alloc(type, 0);
+	if (self != NULL) {
+		/*self->first = PyUnicode_FromString("");
+		if (self->first == NULL) {
+			Py_DECREF(self);
+			return NULL;
+		}*/
+		self->_object = new Batch(1000);
+	}
+	return (PyObject*)self;
+}
+
+static int Batch_init(glrenderer_Batch *self, PyObject *args, PyObject *kwds) {
+	/*size_t batchSize;
+	if (!PyArg_ParseTuple(args, "I", &batchSize))
+		return -1;*/
+	return 0;
+}
+
+static void Batch_dealloc(glrenderer_Batch* self) {
+	//Py_XDECREF(self->first);
+	delete self->_object;
+	Py_TYPE(self)->tp_free((PyObject*)self);
+}
+
+static PyMemberDef Batch_members[] = {
+	{ NULL }
+};
+
+static PyTypeObject glrenderer_BatchType = {
+	PyObject_HEAD_INIT(NULL, 0)
+	"glrenderer.Batch",        /*tp_name*/
+	sizeof(glrenderer_Batch),  /*tp_basicsize*/
+	0,                         /*tp_itemsize*/
+	(destructor)Batch_dealloc, /*tp_dealloc*/
+	0,                         /*tp_print*/
+	0,                         /*tp_getattr*/
+	0,                         /*tp_setattr*/
+	0,                         /*tp_compare*/
+	0,                         /*tp_repr*/
+	0,                         /*tp_as_number*/
+	0,                         /*tp_as_sequence*/
+	0,                         /*tp_as_mapping*/
+	0,                         /*tp_hash */
+	0,                         /*tp_call*/
+	0,                         /*tp_str*/
+	0,                         /*tp_getattro*/
+	0,                         /*tp_setattro*/
+	0,                         /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+	NULL, /*tp_doc*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0, /*Batch_methods*/
+	Batch_members,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	(initproc)Batch_init,
+	0,
+	Batch_new
+};
+
+static PyObject* glrenderer_init(PyObject *self, PyObject *args) {
+	loadGLFunctions();
+	Py_RETURN_NONE;
+}
+
 // when a function fails, it should set an exception condition and return an error value (usually a NULL pointer)
 // Exceptions are stored in a static global variable inside the interpreter; if this variable is NULL no exception has occurred.
 // A second global variable stores the “associated value” of the exception (the second argument to raise).
@@ -59,6 +145,7 @@ static PyMethodDef methods[] = {
 	{ "setviewport", spam_setviewport, METH_VARARGS },
 	{ "setclearcolor", spam_setclearcolor, METH_VARARGS },
 	{ "clear", spam_clear, METH_VARARGS },
+	{ "init", glrenderer_init, METH_VARARGS },
 	0
 };
 // keyword arguments: use METH_KEYWORDS
@@ -72,12 +159,13 @@ static struct PyModuleDef glextModule = {
 	methods
 };
 
-#include "batch.hpp"
-
 PyMODINIT_FUNC
 PyInit_glrenderer(void)
 {
 	PyObject *m;
+
+	if (PyType_Ready(&glrenderer_BatchType) < 0)
+		return NULL;
 
 	m = PyModule_Create(&glextModule);
 	if (m == NULL)
@@ -87,7 +175,10 @@ PyInit_glrenderer(void)
 	//Py_INCREF(SpamError);
 	//PyModule_AddObject(m, "error", SpamError);
 
-	loadGLFunctions();
+	//loadGLFunctions(); // TODO: fix using fake WGL context
+
+	//glrenderer_BatchType.tp_new = PyType_GenericNew;
+	PyModule_AddObject(m, "Batch", (PyObject *)&glrenderer_BatchType);
 
 	return m;
 }

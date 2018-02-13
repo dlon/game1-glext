@@ -67,35 +67,46 @@ void Batch::setupShaders() {
 }
 
 void Batch::createBuffers() {
-	std::vector<size_t> indices(4 * maxBatchSize);
-
+	GLuint* indices = new GLuint[6 * maxBatchSize];
 	for (int i = 0; i < maxBatchSize; i++) {
 		// TODO: pre-generate this
-		indices.push_back(4 * i + 0);
-		indices.push_back(4 * i + 2);
-		indices.push_back(4 * i + 1);
-		indices.push_back(4 * i + 2);
-		indices.push_back(4 * i + 1);
-		indices.push_back(4 * i + 3);
+		indices[6 * i + 0] = 6 * i + 0;
+		indices[6 * i + 1] = 6 * i + 2;
+		indices[6 * i + 2] = 6 * i + 1;
+		indices[6 * i + 3] = 6 * i + 2;
+		indices[6 * i + 4] = 6 * i + 1;
+		indices[6 * i + 0] = 6 * i + 3;
 	}
+	printf("%d\n", sizeof(indices));
 
 	glGenBuffers(1, &indexVbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVbo);
 	glBufferData(
 		GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(size_t) * indices.size(),
-		&indices[0],
+		sizeof(GLuint) * (6 * maxBatchSize),
+		indices,
 		GL_STATIC_DRAW
+	);
+
+	delete[] indices;
+
+	glGenBuffers(1, &vertexVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexVbo);
+	vertexAttribData.resize(4 * 8 * maxBatchSize);
+	glBufferData(
+		GL_ARRAY_BUFFER,
+		sizeof(attributeType) * vertexAttribData.size(),
+		vertexAttribData.data(),
+		GL_DYNAMIC_DRAW
 	);
 }
 
 Batch::Batch(size_t maxBatchSize) {
-	setupShaders();
-	
 	this->maxBatchSize = maxBatchSize;
 	objectIndex = 0;
 	currentTexture = NULL;
 
+	setupShaders();
 	createBuffers();
 }
 

@@ -1,6 +1,5 @@
 #include <Windows.h>
 #include <gl/GL.h>
-#include <gl/GLU.h>
 #include "glutil.hpp"
 #include <stdio.h>
 #include <assert.h>
@@ -50,6 +49,7 @@ void(*glUniform4f)(GLint location,
 	GLfloat v1,
 	GLfloat v2,
 	GLfloat v3) = NULL;
+
 
 void loadGLFunctions() {
 	glEnableVertexAttribArray = (void(*)(GLuint))wglGetProcAddress("glEnableVertexAttribArray");

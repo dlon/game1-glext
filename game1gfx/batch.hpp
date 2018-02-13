@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glutil.hpp"
+#include <vector>
 
 class Batch {
 
@@ -12,8 +13,11 @@ protected:
 	GLuint vertexShader;
 	GLuint fragmentShader;
 
+	typedef GLfloat attributeType;
+
 	GLuint indexVbo;
 	GLuint vertexVbo;
+	std::vector<attributeType> vertexAttribData;
 
 	size_t maxBatchSize;
 	int objectIndex;
