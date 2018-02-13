@@ -3,6 +3,7 @@
 #include "glutil.hpp"
 #include <Windows.h>
 #include <gl/GL.h>
+#include "Texture.h"
 
 static PyObject* spam_setclearcolor(PyObject *self, PyObject *args)
 {
@@ -166,6 +167,8 @@ PyInit_glrenderer(void)
 
 	if (PyType_Ready(&glrenderer_BatchType) < 0)
 		return NULL;
+	if (PyType_Ready(&glrenderer_TextureType) < 0)
+		return NULL;
 
 	m = PyModule_Create(&glextModule);
 	if (m == NULL)
@@ -179,6 +182,7 @@ PyInit_glrenderer(void)
 
 	//glrenderer_BatchType.tp_new = PyType_GenericNew;
 	PyModule_AddObject(m, "Batch", (PyObject *)&glrenderer_BatchType);
+	PyModule_AddObject(m, "Texture", (PyObject *)&glrenderer_TextureType);
 
 	return m;
 }
