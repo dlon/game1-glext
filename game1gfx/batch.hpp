@@ -5,7 +5,11 @@
 #include "Texture.h"
 
 class Batch {
+public:
+	typedef GLfloat attributeType;
+	typedef GLushort indexType;
 
+private:
 	void setupShaders();
 	void createBuffers();
 
@@ -13,9 +17,6 @@ protected:
 	GLuint program;
 	GLuint vertexShader;
 	GLuint fragmentShader;
-
-	typedef GLfloat attributeType;
-	typedef GLushort indexType;
 
 	GLuint indexVbo;
 	std::vector<indexType> indices;

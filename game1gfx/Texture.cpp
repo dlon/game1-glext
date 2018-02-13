@@ -32,7 +32,7 @@ static int Texture_init(glrenderer_Texture *self, PyObject *args, PyObject *kwds
 
 static void Texture_dealloc(glrenderer_Texture* self) {
 	//Py_XDECREF(self->first);
-	//delete self->textureObject; // FIXME: memory leak
+	delete self->textureObject; // FIXME
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 

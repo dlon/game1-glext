@@ -168,11 +168,13 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TextureRegion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="batch.hpp" />
     <ClInclude Include="glutil.hpp" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureRegion.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
