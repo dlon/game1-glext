@@ -21,5 +21,5 @@ public:
 
 struct glrenderer_Texture {
 	PyObject_HEAD
-		Texture *textureObject;
+	Texture *textureObject;
 };

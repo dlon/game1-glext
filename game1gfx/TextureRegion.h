@@ -1,8 +1,11 @@
 #pragma once
 
+#include <Python.h>
 #include "batch.hpp"
 
 class Texture;
+
+extern PyTypeObject glrenderer_TextureRegionType;
 
 class TextureRegion
 {
@@ -20,6 +23,10 @@ public:
 	void setScaleX(float s);
 	void setScaleY(float s);
 	void transform(float angle, float sx, float sy);
-	void updateArray(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y);
+	void updateArray(std::vector<Batch::attributeType> &vertexAttribData, int objectIndex, GLfloat x, GLfloat y);
 };
 
+struct glrenderer_TextureRegion {
+	PyObject_HEAD
+	TextureRegion *_object;
+};

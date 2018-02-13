@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <gl/GL.h>
 #include "Texture.h"
+#include "TextureRegion.h"
 
 static PyObject* spam_setclearcolor(PyObject *self, PyObject *args)
 {
@@ -98,9 +99,10 @@ Batch_draw(glrenderer_Batch *self, PyObject *arg)
 {
 	Py_INCREF(arg);
 	
-	// TODO: make sure it's the right type (glrenderer_Texture)
-
-	self->_object->draw(*((glrenderer_Texture*)arg)->textureObject);
+	//self->_object->draw(*((glrenderer_Texture*)arg)->textureObject);
+	// TODO: error checking
+	// TODO: position parameters
+	self->_object->draw(*((glrenderer_TextureRegion*)arg)->_object, 10, 10);
 
 	Py_DECREF(arg);
 
@@ -212,6 +214,8 @@ PyInit_glrenderer(void)
 		return NULL;
 	if (PyType_Ready(&glrenderer_TextureType) < 0)
 		return NULL;
+	if (PyType_Ready(&glrenderer_TextureRegionType) < 0)
+		return NULL;
 
 	m = PyModule_Create(&glextModule);
 	if (m == NULL)
@@ -226,6 +230,7 @@ PyInit_glrenderer(void)
 	//glrenderer_BatchType.tp_new = PyType_GenericNew;
 	PyModule_AddObject(m, "Batch", (PyObject *)&glrenderer_BatchType);
 	PyModule_AddObject(m, "Texture", (PyObject *)&glrenderer_TextureType);
+	PyModule_AddObject(m, "TextureRegion", (PyObject *)&glrenderer_TextureRegionType);
 
 	return m;
 }

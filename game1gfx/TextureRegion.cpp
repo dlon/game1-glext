@@ -1,4 +1,95 @@
 #include "TextureRegion.h"
+#include <structmember.h>
+#include "Texture.h"
+
+static PyObject* TextureRegion_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+	glrenderer_TextureRegion *self;
+	self = (glrenderer_TextureRegion*)type->tp_alloc(type, 0);
+	if (self != NULL) {
+	}
+	return (PyObject*)self;
+}
+
+static int TextureRegion_init(glrenderer_TextureRegion *self, PyObject *args, PyObject *kwds) {
+	unsigned int subX;
+	unsigned int subY;
+	unsigned int subWidth;
+	unsigned int subHeight;
+	glrenderer_Texture* texture = NULL;
+
+	static char *kwlist[] = { "texture", "subX", "subY", "subwidth", "subheight", 0 };
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!IIII", kwlist,
+		&glrenderer_TextureType, &texture,
+		&subX, &subY, &subWidth, &subHeight))
+		return -1;
+
+	// TODO: get glrenderer_Texture
+
+	self->_object = new TextureRegion(
+		*texture->textureObject,
+		subX, subY,
+		subWidth, subHeight
+	);
+
+	// FIXME: memory leaks?
+
+	return 0;
+}
+
+static void TextureRegion_dealloc(glrenderer_TextureRegion* self) {
+	delete self->_object; // FIXME
+	Py_TYPE(self)->tp_free((PyObject*)self);
+}
+
+static PyMethodDef TextureRegion_methods[] = {
+	{ NULL }
+};
+
+static PyMemberDef TextureRegion_members[] = {
+	{ NULL }
+};
+
+PyTypeObject glrenderer_TextureRegionType = {
+	PyObject_HEAD_INIT(NULL, 0)
+	"glrenderer.TextureRegion",        /*tp_name*/
+	sizeof(glrenderer_TextureRegion),/*tp_basicsize*/
+	0,                         /*tp_itemsize*/
+	(destructor)TextureRegion_dealloc, /*tp_dealloc*/
+	0,                         /*tp_print*/
+	0,                         /*tp_getattr*/
+	0,                         /*tp_setattr*/
+	0,                         /*tp_compare*/
+	0,                         /*tp_repr*/
+	0,                         /*tp_as_number*/
+	0,                         /*tp_as_sequence*/
+	0,                         /*tp_as_mapping*/
+	0,                         /*tp_hash */
+	0,                         /*tp_call*/
+	0,                         /*tp_str*/
+	0,                         /*tp_getattro*/
+	0,                         /*tp_setattro*/
+	0,                         /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+	NULL, /*tp_doc*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	TextureRegion_methods,
+	TextureRegion_members,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	(initproc)TextureRegion_init,
+	0,
+	TextureRegion_new
+};
 
 
 TextureRegion::TextureRegion(const Texture& texture, int subX, int subY, int subWidth, int subHeight)
@@ -14,40 +105,19 @@ TextureRegion::~TextureRegion()
 
 void TextureRegion::writeVertices(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
 {
-	/*
-	aj[8 * 0 + 0] = x + self.relativeVertices[0][0]
-	aj[8 * 0 + 1] = y + self.relativeVertices[0][1]
-	aj[8 * 1 + 0] = x + self.relativeVertices[1][0]
-	aj[8 * 1 + 1] = y + self.relativeVertices[1][1]
-	aj[8 * 2 + 0] = x + self.relativeVertices[2][0]
-	aj[8 * 2 + 1] = y + self.relativeVertices[2][1]
-	aj[8 * 3 + 0] = x + self.relativeVertices[3][0]
-	aj[8 * 3 + 1] = y + self.relativeVertices[3][1]
-	*/
 	// !TODO: replace with non-fixed values
-	vertexAttribData[8 * 4 * offset + 8 * 0 + 0] = 0;
-	vertexAttribData[8 * 4 * offset + 8 * 0 + 1] = 0;
-	vertexAttribData[8 * 4 * offset + 8 * 1 + 0] = 100;
-	vertexAttribData[8 * 4 * offset + 8 * 1 + 1] = 0;
-	vertexAttribData[8 * 4 * offset + 8 * 2 + 0] = 0;
-	vertexAttribData[8 * 4 * offset + 8 * 2 + 1] = 100;
-	vertexAttribData[8 * 4 * offset + 8 * 3 + 0] = 100;
-	vertexAttribData[8 * 4 * offset + 8 * 3 + 1] = 100;
+	vertexAttribData[8 * 4 * offset + 8 * 0 + 0] = 0 + x;
+	vertexAttribData[8 * 4 * offset + 8 * 0 + 1] = 0 + y;
+	vertexAttribData[8 * 4 * offset + 8 * 1 + 0] = 100 + x;
+	vertexAttribData[8 * 4 * offset + 8 * 1 + 1] = 0 + y;
+	vertexAttribData[8 * 4 * offset + 8 * 2 + 0] = 0 + x;
+	vertexAttribData[8 * 4 * offset + 8 * 2 + 1] = 100 + y;
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 0] = 100 + x;
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 1] = 100 + y;
 }
 
 void TextureRegion::writeTexCoords(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
 {
-	/*
-	nc = self.normalizedCoords
-    aj[8 * 0 + 2] = nc[0]
-    aj[8 * 0 + 3] = nc[1]
-    aj[8 * 1 + 2] = nc[2]
-    aj[8 * 1 + 3] = nc[3]
-    aj[8 * 2 + 2] = nc[4]
-    aj[8 * 2 + 3] = nc[5]
-    aj[8 * 3 + 2] = nc[6]
-    aj[8 * 3 + 3] = nc[7]
-	*/
 	// !TODO: replace with non-fixed values
 	vertexAttribData[8 * 4 * offset + 8 * 0 + 2] = 0;
 	vertexAttribData[8 * 4 * offset + 8 * 0 + 3] = 0;
@@ -61,24 +131,6 @@ void TextureRegion::writeTexCoords(std::vector<Batch::attributeType> &vertexAttr
 
 void TextureRegion::writeColors(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
 {
-	/*
-	aj[8 * 0 + 4] = self.color[0]
-    aj[8 * 0 + 5] = self.color[1]
-    aj[8 * 0 + 6] = self.color[2]
-    aj[8 * 0 + 7] = self.color[3]
-    aj[8 * 1 + 4] = self.color[0]
-    aj[8 * 1 + 5] = self.color[1]
-    aj[8 * 1 + 6] = self.color[2]
-    aj[8 * 1 + 7] = self.color[3]
-    aj[8 * 2 + 4] = self.color[0]
-    aj[8 * 2 + 5] = self.color[1]
-    aj[8 * 2 + 6] = self.color[2]
-    aj[8 * 2 + 7] = self.color[3]
-    aj[8 * 3 + 4] = self.color[0]
-    aj[8 * 3 + 5] = self.color[1]
-    aj[8 * 3 + 6] = self.color[2]
-    aj[8 * 3 + 7] = self.color[3]
-	*/
 	// !TODO: replace with non-fixed values
 	for (int i = 0; i < 4; i++) {
 		vertexAttribData[8 * 4 * offset + 8 * i + 4] = 1;
@@ -88,9 +140,9 @@ void TextureRegion::writeColors(std::vector<Batch::attributeType> &vertexAttribD
 	}
 }
 
-void TextureRegion::updateArray(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
+void TextureRegion::updateArray(std::vector<Batch::attributeType> &vertexAttribData, int objectIndex, GLfloat x, GLfloat y)
 {
-	writeVertices(vertexAttribData, offset, x, y);
-	writeTexCoords(vertexAttribData, offset, x, y);
-	writeColors(vertexAttribData, offset, x, y);
+	writeVertices(vertexAttribData, objectIndex, x, y);
+	writeTexCoords(vertexAttribData, objectIndex, x, y);
+	writeColors(vertexAttribData, objectIndex, x, y);
 }
