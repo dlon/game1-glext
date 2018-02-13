@@ -41,5 +41,5 @@ public:
 	void flush();
 	void end();
 
-	void draw(const Texture &texture, GLfloat x, GLfloat y, GLfloat w, GLfloat h);
+	void draw(const Texture &texture); // test
 };

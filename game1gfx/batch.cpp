@@ -206,3 +206,37 @@ void Batch::flush() {
 	);
 	objectIndex = 0;
 }
+
+void Batch::draw(const Texture &texture)
+{
+	// FIXME: just a test
+
+	glBindTexture(GL_TEXTURE_2D, texture.texture);
+
+	vertexAttribData[8 * 0 + 0] = 0;
+	vertexAttribData[8 * 0 + 1] = 0;
+	vertexAttribData[8 * 1 + 0] = 100;
+	vertexAttribData[8 * 1 + 1] = 0;
+	vertexAttribData[8 * 2 + 0] = 0;
+	vertexAttribData[8 * 2 + 1] = 100;
+	vertexAttribData[8 * 3 + 0] = 100;
+	vertexAttribData[8 * 3 + 1] = 100;
+
+	vertexAttribData[8 * 0 + 2] = 0;
+	vertexAttribData[8 * 0 + 3] = 0;
+	vertexAttribData[8 * 1 + 2] = 1;
+	vertexAttribData[8 * 1 + 3] = 0;
+	vertexAttribData[8 * 2 + 2] = 0;
+	vertexAttribData[8 * 2 + 3] = 1;
+	vertexAttribData[8 * 3 + 2] = 1;
+	vertexAttribData[8 * 3 + 3] = 1;
+
+	for (int i = 0; i < 4; i++) {
+		vertexAttribData[8 * i + 4] = 1;
+		vertexAttribData[8 * i + 5] = 1;
+		vertexAttribData[8 * i + 6] = 1;
+		vertexAttribData[8 * i + 7] = 1;
+	}
+
+	objectIndex++;
+}

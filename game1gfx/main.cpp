@@ -93,11 +93,25 @@ Batch_flush(glrenderer_Batch *self)
 	Py_RETURN_NONE;
 }
 
+static PyObject *
+Batch_draw(glrenderer_Batch *self, PyObject *arg)
+{
+	Py_INCREF(arg);
+	
+	// TODO: make sure it's the right type (glrenderer_Texture)
+
+	self->_object->draw(*((glrenderer_Texture*)arg)->textureObject);
+
+	Py_DECREF(arg);
+
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef Batch_methods[] = {
 	{ "begin", (PyCFunction)Batch_begin, METH_NOARGS, NULL },
 	{ "flush", (PyCFunction)Batch_flush, METH_NOARGS, NULL },
 	{ "end", (PyCFunction)Batch_end, METH_NOARGS, NULL },
-	//{ "draw", (PyCFunction)Batch_draw, METH_VARARGS, NULL },
+	{ "draw", (PyCFunction)Batch_draw, METH_O, NULL },
 	{ NULL }
 };
 

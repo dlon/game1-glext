@@ -2,11 +2,6 @@
 #include <structmember.h>
 #include "Texture.h"
 
-struct glrenderer_Texture {
-	PyObject_HEAD
-	Texture *textureObject;
-};
-
 static PyObject* Texture_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 	glrenderer_Texture *self;
 	self = (glrenderer_Texture*)type->tp_alloc(type, 0);
