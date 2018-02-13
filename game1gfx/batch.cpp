@@ -100,23 +100,22 @@ void Batch::setupShaders() {
 }
 
 void Batch::createBuffers() {
-	GLuint* indices = new GLuint[6 * maxBatchSize];
+	GLushort* indices = new GLushort[6 * maxBatchSize];
 	for (int i = 0; i < maxBatchSize; i++) {
 		// TODO: pre-generate this
-		indices[6 * i + 0] = 6 * i + 0;
-		indices[6 * i + 1] = 6 * i + 2;
-		indices[6 * i + 2] = 6 * i + 1;
-		indices[6 * i + 3] = 6 * i + 2;
-		indices[6 * i + 4] = 6 * i + 1;
-		indices[6 * i + 0] = 6 * i + 3;
+		indices[6 * i + 0] = 4 * i + 0;
+		indices[6 * i + 1] = 4 * i + 2;
+		indices[6 * i + 2] = 4 * i + 1;
+		indices[6 * i + 3] = 4 * i + 2;
+		indices[6 * i + 4] = 4 * i + 1;
+		indices[6 * i + 5] = 4 * i + 3;
 	}
-	printf("%d\n", sizeof(indices));
 
 	glGenBuffers(1, &indexVbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVbo);
 	glBufferData(
 		GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(GLuint) * (6 * maxBatchSize),
+		sizeof(GLushort) * (6 * maxBatchSize),
 		indices,
 		GL_STATIC_DRAW
 	);
