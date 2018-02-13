@@ -93,7 +93,7 @@ PyTypeObject glrenderer_TextureType = {
 	0,
 	0,
 	0,
-	0,//Texture_methods, /*methods*/
+	Texture_methods,
 	Texture_members,
 	0,
 	0,

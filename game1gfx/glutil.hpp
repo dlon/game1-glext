@@ -21,6 +21,9 @@ extern GLuint(*glCreateProgram)();
 extern void(*glUseProgram)(GLuint program);
 extern void(*glLinkProgram)(GLuint program);
 extern void(*glDeleteProgram)(GLuint program);
+extern void(*glGetProgramiv)(GLuint program,
+	GLenum pname,
+	GLint *params);
 
 extern GLuint(*glCreateShader)(GLenum shaderType);
 extern void(*glShaderSource)(GLuint shader,
@@ -30,6 +33,9 @@ extern void(*glShaderSource)(GLuint shader,
 extern void(*glCompileShader)(GLuint shader);
 extern void(*glAttachShader)(GLuint program, GLuint shader);
 extern void(*glDeleteShader)(GLuint shader);
+extern void(*glGetShaderiv)(GLuint shader,
+	GLenum pname,
+	GLint *params);
 
 extern void(*glActiveTexture)(GLenum texture);
 

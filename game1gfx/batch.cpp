@@ -7,7 +7,7 @@
 const char vertexShaderSource[] = R"(#version 440
 
 layout(location = 0) uniform mat3 vpMatrix;
-layout(location = 2) uniform mat3 mMatrix;
+//layout(location = 2) uniform mat3 mMatrix;
 
 layout(location = 0) in vec2 vPosition;
 layout(location = 1) in vec2 vTexCoord0;
@@ -17,21 +17,20 @@ out vec2 texCoord0;
 out vec4 vertColor;
 
 void main(void) {
-	gl_Position = vec4(vpMatrix * mMatrix * vec3(vPosition, 1.0), 1.0);
+	//gl_Position = vec4(vpMatrix * mMatrix * vec3(vPosition, 1.0), 1.0);
+	gl_Position = vec4(vpMatrix * vec3(vPosition, 1.0), 1.0);
 	texCoord0 = vTexCoord0;
 	vertColor = vVertColor;
 })";
 
 const char fragmentShaderSource[] = R"(#version 440
-    
-layout (location = 3) uniform vec4 colorUniform;
 
 in vec2 texCoord0;
 in vec4 vertColor;
 layout (location = 1) uniform sampler2D u_texture0;
 
 void main(void) {
-    gl_FragColor = colorUniform * vertColor * texture2D(u_texture0, texCoord0);
+    gl_FragColor = vertColor * texture2D(u_texture0, texCoord0);
 })";
 
 
@@ -59,10 +58,28 @@ void Batch::setupShaders() {
 	);
 	glCompileShader(fragmentShader);
 
+	GLint isCompiledV = 0;
+	GLint isCompiledF = 0;
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiledV);
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isCompiledF);
+
+	printf("vertex shader: %d\n", isCompiledV);
+	printf("fragment shader: %d\n", isCompiledF);
+	// TODO: cleanup
+
 	// TODO: error checking & exceptions
 
 	glAttachShader(program, vertexShader);
 	glAttachShader(program, fragmentShader);
+	
+	glLinkProgram(program); // TODO: error check
+	GLint isLinked = 0;
+	glGetProgramiv(
+		program,
+		GL_LINK_STATUS,
+		&isLinked
+	);
+	printf("link status: %d\n", isLinked);
 
 	glEnableVertexAttribArray(positionAttribute);
 	glEnableVertexAttribArray(texCoordAttribute);
@@ -83,11 +100,10 @@ void Batch::setupShaders() {
 	for (int i = 0; i<3; i++) {
 		for (int j = 0; j<3; j++) {
 			for (int k = 0; k<3; k++) {
-				matrix[i][j] += viewMatrix[i][k] * projectionMatrix[k][j];
+				matrix[i][j] += viewMatrix[i][j] * projectionMatrix[k][j];
 			}
 		}
 	}
-	// kan vara fel
 	
 	glUseProgram(program);
 	glUniformMatrix3fv(
@@ -115,7 +131,7 @@ void Batch::createBuffers() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVbo);
 	glBufferData(
 		GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(indexType) * (6 * maxBatchSize),
+		sizeof(indexType) * indices.size(),
 		indices.data(),
 		GL_STATIC_DRAW
 	);
@@ -159,20 +175,20 @@ void Batch::begin() {
 		glBindTexture(GL_TEXTURE_2D, currentTexture );
 
 	glVertexAttribPointer(
-		texCoordAttribute,
-		2,
-		GL_FLOAT,
-		GL_TRUE,
-		8 * sizeof(attributeType),
-		(const GLvoid*)(2 * sizeof(attributeType))
-	);
-	glVertexAttribPointer(
 		positionAttribute,
 		2,
 		GL_FLOAT,
 		GL_FALSE,
 		8 * sizeof(attributeType),
 		(const GLvoid*)(0 * sizeof(attributeType))
+	);
+	glVertexAttribPointer(
+		texCoordAttribute,
+		2,
+		GL_FLOAT,
+		GL_TRUE,
+		8 * sizeof(attributeType),
+		(const GLvoid*)(2 * sizeof(attributeType))
 	);
 	glVertexAttribPointer(
 		colorAttribute,
@@ -202,8 +218,9 @@ void Batch::flush() {
 		GL_TRIANGLES,
 		6 * objectIndex,
 		GL_UNSIGNED_SHORT,
-		indices.data()
+		0
 	);
+	
 	objectIndex = 0;
 }
 
@@ -211,7 +228,8 @@ void Batch::draw(const Texture &texture)
 {
 	// FIXME: just a test
 
-	glBindTexture(GL_TEXTURE_2D, texture.texture);
+	currentTexture = texture.texture;
+	glBindTexture(GL_TEXTURE_2D, currentTexture);
 
 	vertexAttribData[8 * 0 + 0] = 0;
 	vertexAttribData[8 * 0 + 1] = 0;

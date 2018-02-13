@@ -19,6 +19,9 @@ GLuint(*glCreateProgram)() = NULL;
 void(*glUseProgram)(GLuint program) = NULL;
 void(*glLinkProgram)(GLuint program) = NULL;
 void(*glDeleteProgram)(GLuint program) = NULL;
+void(*glGetProgramiv)(GLuint program,
+	GLenum pname,
+	GLint *params) = NULL;
 
 GLuint(*glCreateShader)(GLenum shaderType) = NULL;
 void(*glShaderSource)(GLuint shader,
@@ -28,6 +31,9 @@ void(*glShaderSource)(GLuint shader,
 void(*glCompileShader)(GLuint shader) = NULL;
 void(*glAttachShader)(GLuint program, GLuint shader) = NULL;
 void(*glDeleteShader)(GLuint shader) = NULL;
+void(*glGetShaderiv)(GLuint shader,
+	GLenum pname,
+	GLint *params) = NULL;
 
 void(*glActiveTexture)(GLenum texture) = NULL;
 
@@ -73,6 +79,9 @@ void loadGLFunctions() {
 	glUseProgram = (void(*)(GLuint))wglGetProcAddress("glUseProgram");
 	glLinkProgram = (void(*)(GLuint))wglGetProcAddress("glLinkProgram");
 	glDeleteProgram = (void(*)(GLuint))wglGetProcAddress("glDeleteProgram");
+	glGetProgramiv = (void(*)(GLuint program,
+		GLenum pname,
+		GLint *params))wglGetProcAddress("glGetProgramiv");
 	
 	glCreateShader = (GLuint(*)(GLenum))wglGetProcAddress("glCreateShader");
 	glShaderSource = (void(*)(GLuint shader,
@@ -82,7 +91,10 @@ void loadGLFunctions() {
 	glCompileShader = (void(*)(GLuint))wglGetProcAddress("glCompileShader");
 	glAttachShader = (void(*)(GLuint, GLuint))wglGetProcAddress("glAttachShader");
 	glDeleteShader = (void(*)(GLuint))wglGetProcAddress("glDeleteShader");
-	
+	glGetShaderiv = (void(*)(GLuint shader,
+		GLenum pname,
+		GLint *params))wglGetProcAddress("glGetShaderiv");
+
 	glActiveTexture = (void(*)(GLenum))wglGetProcAddress("glActiveTexture");
 	
 	glDeleteBuffers = (void(*)(GLsizei, const GLuint*))wglGetProcAddress("glDeleteBuffers");
