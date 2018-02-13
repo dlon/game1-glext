@@ -4,6 +4,9 @@
 #include "glutil.hpp"
 #include <vector>
 
+#include "TextureRegion.h"
+#include "Texture.h"
+
 const char vertexShaderSource[] = R"(#version 440
 
 layout(location = 0) uniform mat3 vpMatrix;
@@ -226,7 +229,7 @@ void Batch::flush() {
 
 void Batch::draw(const Texture &texture)
 {
-	// FIXME: just a test
+	// FIXME: just a test. batch correctly
 
 	currentTexture = texture.texture;
 	glBindTexture(GL_TEXTURE_2D, currentTexture);
@@ -255,6 +258,22 @@ void Batch::draw(const Texture &texture)
 		vertexAttribData[8 * i + 6] = 1;
 		vertexAttribData[8 * i + 7] = 1;
 	}
+
+	objectIndex++;
+}
+
+void Batch::draw(TextureRegion &textureRegion, float x, float y)
+{
+	// FIXME: just a test. batch correctly
+
+	currentTexture = textureRegion.texture.texture;
+	glBindTexture(GL_TEXTURE_2D, currentTexture);
+
+	textureRegion.updateArray(
+		vertexAttribData,
+		0,
+		x, y
+	);
 
 	objectIndex++;
 }

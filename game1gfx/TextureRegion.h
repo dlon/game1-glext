@@ -2,6 +2,8 @@
 
 #include "batch.hpp"
 
+class Texture;
+
 class TextureRegion
 {
 	void writeVertices(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y);

@@ -2,7 +2,9 @@
 
 #include "glutil.hpp"
 #include <vector>
-#include "Texture.h"
+
+class Texture;
+class TextureRegion;
 
 class Batch {
 public:
@@ -43,4 +45,5 @@ public:
 	void end();
 
 	void draw(const Texture &texture); // test
+	void draw(TextureRegion &textureRegion, float x, float y);
 };
