@@ -44,6 +44,8 @@ void (*glUniformMatrix3fv)(GLint location,
 	GLboolean transpose,
 	const GLfloat *value) = NULL;
 void (*glUniform1f)(GLint location, GLfloat v0) = NULL;
+void(*glUniform1i)(GLint location,
+	GLint v0) = NULL;
 void(*glUniform4f)(GLint location,
 	GLfloat v0,
 	GLfloat v1,
@@ -92,6 +94,8 @@ void loadGLFunctions() {
 		GLboolean transpose,
 		const GLfloat *value))wglGetProcAddress("glUniformMatrix3fv");
 	glUniform1f = (void(*)(GLint location, GLfloat v0))wglGetProcAddress("glUniform1f");
+	glUniform1i = (void(*)(GLint location,
+		GLint v0))wglGetProcAddress("glUniform1i");
 	glUniform4f = (void(*)(GLint location,
 		GLfloat v0,
 		GLfloat v1,

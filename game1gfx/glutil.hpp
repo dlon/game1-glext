@@ -46,6 +46,8 @@ extern void(*glUniformMatrix3fv)(GLint location,
 	GLboolean transpose,
 	const GLfloat *value);
 extern void(*glUniform1f)(GLint location, GLfloat v0);
+extern void(*glUniform1i)(GLint location,
+	GLint v0);
 extern void(*glUniform4f)(GLint location,
 	GLfloat v0,
 	GLfloat v1,

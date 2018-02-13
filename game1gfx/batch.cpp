@@ -59,11 +59,44 @@ void Batch::setupShaders() {
 	);
 	glCompileShader(fragmentShader);
 
-	// TODO: error checking
+	// TODO: error checking & exceptions
+
+	glAttachShader(program, vertexShader);
+	glAttachShader(program, fragmentShader);
 
 	glEnableVertexAttribArray(positionAttribute);
 	glEnableVertexAttribArray(texCoordAttribute);
 	glEnableVertexAttribArray(colorAttribute);
+
+	GLfloat projectionMatrix[3][3] = {
+		{ 2.0f/320.0f, 0, 0 },
+		{ 0, -2.0f / 240.0f, 0 },
+		{ 0, 0, 1 }
+	};
+	GLfloat viewMatrix[3][3] = {
+		{ 1, 0, 0 },
+		{ 0, 1, 0 },
+		{ -160, -120, 1 }
+	};
+
+	GLfloat matrix[3][3] = { 0 };
+	for (int i = 0; i<3; i++) {
+		for (int j = 0; j<3; j++) {
+			for (int k = 0; k<3; k++) {
+				matrix[i][j] += viewMatrix[i][k] * projectionMatrix[k][j];
+			}
+		}
+	}
+	// kan vara fel
+	
+	glUseProgram(program);
+	glUniformMatrix3fv(
+		vpMatrixUniform,
+		1,
+		GL_FALSE,
+		(GLfloat*)matrix
+	);
+	glUniform1i(textureUniform, 0);
 }
 
 void Batch::createBuffers() {
@@ -108,6 +141,9 @@ Batch::Batch(size_t maxBatchSize) {
 
 	setupShaders();
 	createBuffers();
+
+	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 Batch::~Batch() {
