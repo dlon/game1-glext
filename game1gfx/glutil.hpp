@@ -40,6 +40,10 @@ extern void(*glBufferData)(GLenum target,
 	ptrdiff_t size,
 	const GLvoid * data,
 	GLenum usage);
+extern void(*glBufferSubData)(GLenum target,
+	GLintptr offset,
+	GLsizeiptr size,
+	const GLvoid * data);
 
 extern void(*glUniformMatrix3fv)(GLint location,
 	GLsizei count,

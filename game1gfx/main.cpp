@@ -72,6 +72,35 @@ static void Batch_dealloc(glrenderer_Batch* self) {
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
+static PyObject *
+Batch_begin(glrenderer_Batch *self)
+{
+	self->_object->begin();
+	Py_RETURN_NONE;
+}
+
+static PyObject *
+Batch_end(glrenderer_Batch *self)
+{
+	self->_object->end();
+	Py_RETURN_NONE;
+}
+
+static PyObject *
+Batch_flush(glrenderer_Batch *self)
+{
+	self->_object->flush();
+	Py_RETURN_NONE;
+}
+
+static PyMethodDef Batch_methods[] = {
+	{ "begin", (PyCFunction)Batch_begin, METH_NOARGS, NULL },
+	{ "flush", (PyCFunction)Batch_flush, METH_NOARGS, NULL },
+	{ "end", (PyCFunction)Batch_end, METH_NOARGS, NULL },
+	//{ "draw", (PyCFunction)Batch_draw, METH_VARARGS, NULL },
+	{ NULL }
+};
+
 static PyMemberDef Batch_members[] = {
 	{ NULL }
 };
@@ -104,7 +133,7 @@ static PyTypeObject glrenderer_BatchType = {
 	0,
 	0,
 	0,
-	0, /*Batch_methods*/
+	Batch_methods,
 	Batch_members,
 	0,
 	0,

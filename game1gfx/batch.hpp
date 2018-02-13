@@ -2,6 +2,7 @@
 
 #include "glutil.hpp"
 #include <vector>
+#include "Texture.h"
 
 class Batch {
 
@@ -14,8 +15,10 @@ protected:
 	GLuint fragmentShader;
 
 	typedef GLfloat attributeType;
+	typedef GLushort indexType;
 
 	GLuint indexVbo;
+	std::vector<indexType> indices;
 	GLuint vertexVbo;
 	std::vector<attributeType> vertexAttribData;
 
@@ -33,4 +36,10 @@ public:
 
 	Batch(size_t maxBatchSize);
 	virtual ~Batch();
+
+	void begin();
+	void flush();
+	void end();
+
+	void draw(const Texture &texture, GLfloat x, GLfloat y, GLfloat w, GLfloat h);
 };

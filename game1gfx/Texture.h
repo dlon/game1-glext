@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Python.h>
 #include "glutil.hpp"
 
 extern PyTypeObject glrenderer_TextureType;

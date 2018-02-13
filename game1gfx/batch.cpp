@@ -100,7 +100,7 @@ void Batch::setupShaders() {
 }
 
 void Batch::createBuffers() {
-	GLushort* indices = new GLushort[6 * maxBatchSize];
+	indices.resize(6 * maxBatchSize);
 	for (int i = 0; i < maxBatchSize; i++) {
 		// TODO: pre-generate this
 		indices[6 * i + 0] = 4 * i + 0;
@@ -115,12 +115,10 @@ void Batch::createBuffers() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVbo);
 	glBufferData(
 		GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(GLushort) * (6 * maxBatchSize),
-		indices,
+		sizeof(indexType) * (6 * maxBatchSize),
+		indices.data(),
 		GL_STATIC_DRAW
 	);
-
-	delete[] indices;
 
 	glGenBuffers(1, &vertexVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexVbo);
@@ -149,4 +147,62 @@ Batch::~Batch() {
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 	glDeleteProgram(program);
+}
+
+void Batch::begin() {
+	glBindBuffer(GL_ARRAY_BUFFER, vertexVbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVbo);
+	
+	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
+	if (currentTexture != 0)
+		glBindTexture(GL_TEXTURE_2D, currentTexture );
+
+	glVertexAttribPointer(
+		texCoordAttribute,
+		2,
+		GL_FLOAT,
+		GL_TRUE,
+		8 * sizeof(attributeType),
+		(const GLvoid*)(2 * sizeof(attributeType))
+	);
+	glVertexAttribPointer(
+		positionAttribute,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		8 * sizeof(attributeType),
+		(const GLvoid*)(0 * sizeof(attributeType))
+	);
+	glVertexAttribPointer(
+		colorAttribute,
+		4,
+		GL_FLOAT,
+		GL_TRUE,
+		8 * sizeof(attributeType),
+		(const GLvoid*)(4 * sizeof(attributeType))
+	);
+}
+
+void Batch::end() {
+	flush();
+}
+
+void Batch::flush() {
+	if (!objectIndex)
+		return;
+	
+	glBufferSubData(
+		GL_ARRAY_BUFFER,
+		0,
+		4 * 8 * objectIndex * sizeof(attributeType),
+		vertexAttribData.data()
+	);
+	glDrawElements(
+		GL_TRIANGLES,
+		6 * objectIndex,
+		GL_UNSIGNED_SHORT,
+		indices.data()
+	);
+	objectIndex = 0;
 }

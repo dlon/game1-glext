@@ -38,6 +38,10 @@ void(*glBufferData)(GLenum target,
 	GLsizeiptr size,
 	const GLvoid * data,
 	GLenum usage) = NULL;
+void(*glBufferSubData)(GLenum target,
+	GLintptr offset,
+	GLsizeiptr size,
+	const GLvoid * data) = NULL;
 
 void (*glUniformMatrix3fv)(GLint location,
 	GLsizei count,
@@ -88,6 +92,10 @@ void loadGLFunctions() {
 		GLsizeiptr size,
 		const GLvoid * data,
 		GLenum usage))wglGetProcAddress("glBufferData");
+	glBufferSubData = (void(*)(GLenum target,
+		GLintptr offset,
+		GLsizeiptr size,
+		const GLvoid * data))wglGetProcAddress("glBufferSubData");
 	
 	glUniformMatrix3fv = (void(*)(GLint location,
 		GLsizei count,
