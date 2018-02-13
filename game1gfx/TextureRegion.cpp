@@ -24,6 +24,15 @@ void TextureRegion::writeVertices(std::vector<Batch::attributeType> &vertexAttri
 	aj[8 * 3 + 0] = x + self.relativeVertices[3][0]
 	aj[8 * 3 + 1] = y + self.relativeVertices[3][1]
 	*/
+	// !TODO: replace with non-fixed values
+	vertexAttribData[8 * 4 * offset + 8 * 0 + 0] = 0;
+	vertexAttribData[8 * 4 * offset + 8 * 0 + 1] = 0;
+	vertexAttribData[8 * 4 * offset + 8 * 1 + 0] = 100;
+	vertexAttribData[8 * 4 * offset + 8 * 1 + 1] = 0;
+	vertexAttribData[8 * 4 * offset + 8 * 2 + 0] = 0;
+	vertexAttribData[8 * 4 * offset + 8 * 2 + 1] = 100;
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 0] = 100;
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 1] = 100;
 }
 
 void TextureRegion::writeTexCoords(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
@@ -39,6 +48,15 @@ void TextureRegion::writeTexCoords(std::vector<Batch::attributeType> &vertexAttr
     aj[8 * 3 + 2] = nc[6]
     aj[8 * 3 + 3] = nc[7]
 	*/
+	// !TODO: replace with non-fixed values
+	vertexAttribData[8 * 4 * offset + 8 * 0 + 2] = 0;
+	vertexAttribData[8 * 4 * offset + 8 * 0 + 3] = 0;
+	vertexAttribData[8 * 4 * offset + 8 * 1 + 2] = 1;
+	vertexAttribData[8 * 4 * offset + 8 * 1 + 3] = 0;
+	vertexAttribData[8 * 4 * offset + 8 * 2 + 2] = 0;
+	vertexAttribData[8 * 4 * offset + 8 * 2 + 3] = 1;
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 2] = 1;
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 3] = 1;
 }
 
 void TextureRegion::writeColors(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
@@ -61,6 +79,13 @@ void TextureRegion::writeColors(std::vector<Batch::attributeType> &vertexAttribD
     aj[8 * 3 + 6] = self.color[2]
     aj[8 * 3 + 7] = self.color[3]
 	*/
+	// !TODO: replace with non-fixed values
+	for (int i = 0; i < 4; i++) {
+		vertexAttribData[8 * 4 * offset + 8 * i + 4] = 1;
+		vertexAttribData[8 * 4 * offset + 8 * i + 5] = 1;
+		vertexAttribData[8 * 4 * offset + 8 * i + 6] = 1;
+		vertexAttribData[8 * 4 * offset + 8 * i + 7] = 1;
+	}
 }
 
 void TextureRegion::updateArray(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
