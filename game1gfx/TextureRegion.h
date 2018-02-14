@@ -15,6 +15,7 @@ class TextureRegion
 public:
 	const Texture& texture;
 	GLfloat tx, ty, tw, th;
+	GLfloat color[4] = { 1, 1, 1, 1 };
 
 	TextureRegion(const Texture& texture, int subX, int subY, int subWidth, int subHeight);
 	virtual ~TextureRegion();

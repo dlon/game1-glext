@@ -136,12 +136,11 @@ void TextureRegion::writeTexCoords(std::vector<Batch::attributeType> &vertexAttr
 
 void TextureRegion::writeColors(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
 {
-	// !TODO: replace with non-fixed values
 	for (int i = 0; i < 4; i++) {
-		vertexAttribData[8 * 4 * offset + 8 * i + 4] = 1;
-		vertexAttribData[8 * 4 * offset + 8 * i + 5] = 1;
-		vertexAttribData[8 * 4 * offset + 8 * i + 6] = 1;
-		vertexAttribData[8 * 4 * offset + 8 * i + 7] = 1;
+		vertexAttribData[8 * 4 * offset + 8 * i + 4] = color[0];
+		vertexAttribData[8 * 4 * offset + 8 * i + 5] = color[1];
+		vertexAttribData[8 * 4 * offset + 8 * i + 6] = color[2];
+		vertexAttribData[8 * 4 * offset + 8 * i + 7] = color[3];
 	}
 }
 
