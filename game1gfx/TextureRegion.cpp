@@ -108,10 +108,141 @@ TextureRegion_setHeight(glrenderer_TextureRegion *self, PyObject *args, void *cl
 	return 0;
 }
 
+static int
+TextureRegion_setAngle(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	// FIXME: ref count?
+	float angle;
+	if (!PyArg_Parse(args, "f", &angle))
+		return -1;
+	self->_object->setAngle(angle);
+	return 0;
+}
+
+static PyObject *
+TextureRegion_getAngle(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyFloat_FromDouble(self->_object->angle);
+}
+
+static int
+TextureRegion_setOrigin(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	// FIXME: ref count?
+	float x, y;
+	if (!PyArg_ParseTuple(args, "ff", &x, &y))
+		return -1;
+	self->_object->origin[0] = x;
+	self->_object->origin[1] = y;
+	return 0;
+}
+
+static PyObject *
+TextureRegion_getOrigin(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return Py_BuildValue("ff", self->_object->origin[0], self->_object->origin[1]);
+}
+
+static int
+TextureRegion_setScaleX(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	// FIXME: ref count?
+	float x;
+	if (!PyArg_Parse(args, "f", &x))
+		return -1;
+	self->_object->setScaleX(x);
+	return 0;
+}
+
+static PyObject *
+TextureRegion_getScaleX(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyFloat_FromDouble(self->_object->getScaleX());
+}
+
+static int
+TextureRegion_setScaleY(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	// FIXME: ref count?
+	float y;
+	if (!PyArg_Parse(args, "f", &y))
+		return -1;
+	self->_object->setScaleY(y);
+	return 0;
+}
+
+static PyObject *
+TextureRegion_getScaleY(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyFloat_FromDouble(self->_object->getScaleY());
+}
+
+static int
+TextureRegion_setFlipX(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	// FIXME: ref count?
+	int f;
+	if (!PyArg_Parse(args, "p", &f))
+		return -1;
+	self->_object->flipX = f != 0;
+	return 0;
+}
+
+static PyObject *
+TextureRegion_getFlipX(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyBool_FromLong(self->_object->flipX);
+}
+
+static int
+TextureRegion_setFlipY(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	// FIXME: ref count?
+	int f;
+	if (!PyArg_Parse(args, "p", &f))
+		return -1;
+	self->_object->flipY = f != 0;
+	return 0;
+}
+
+static PyObject *
+TextureRegion_getFlipY(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyBool_FromLong(self->_object->flipY);
+}
+
+static PyObject *
+TextureRegion_getSubWidth(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyFloat_FromDouble(self->_object->tw);
+}
+
+static PyObject *
+TextureRegion_getSubHeight(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyFloat_FromDouble(self->_object->th);
+}
+
 static PyGetSetDef TextureRegion_getset[] = {
 	{ "width",  (getter)TextureRegion_getWidth, (setter)TextureRegion_setWidth, 0, 0 },
 	{ "height",  (getter)TextureRegion_getHeight, (setter)TextureRegion_setHeight, 0, 0 },
 	{ "color",  (getter)TextureRegion_getColor, (setter)TextureRegion_setColor, 0, 0 },
+	{ "angle",  (getter)TextureRegion_getAngle, (setter)TextureRegion_setAngle, 0, 0 },
+	{ "origin",  (getter)TextureRegion_getOrigin, (setter)TextureRegion_setOrigin, 0, 0 },
+	{ "subWidth",  (getter)TextureRegion_getSubWidth, 0, 0, 0 },
+	{ "subHeight",  (getter)TextureRegion_getSubHeight, 0, 0, 0 },
+	{ "scaleX",  (getter)TextureRegion_getScaleX, (setter)TextureRegion_setScaleX, 0, 0 },
+	{ "scaleY",  (getter)TextureRegion_getScaleY, (setter)TextureRegion_setScaleY, 0, 0 },
+	{ "flipX",  (getter)TextureRegion_getFlipX, (setter)TextureRegion_setFlipX, 0, 0 },
+	{ "flipY",  (getter)TextureRegion_getFlipY, (setter)TextureRegion_setFlipY, 0, 0 },
 	{ NULL }
 };
 
