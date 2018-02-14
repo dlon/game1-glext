@@ -93,7 +93,8 @@ PyTypeObject glrenderer_TextureRegionType = {
 TextureRegion::TextureRegion(const Texture& texture, int subX, int subY, int subWidth, int subHeight)
 	: tx(subX), ty(subY), tw(subWidth), th(subHeight), texture(texture)
 {
-
+	width = tw;
+	height = th;
 }
 
 
@@ -106,17 +107,16 @@ void TextureRegion::writeVertices(std::vector<Batch::attributeType> &vertexAttri
 	// !TODO: replace with non-fixed values
 	vertexAttribData[8 * 4 * offset + 8 * 0 + 0] = 0 + x;
 	vertexAttribData[8 * 4 * offset + 8 * 0 + 1] = 0 + y;
-	vertexAttribData[8 * 4 * offset + 8 * 1 + 0] = 100 + x;
+	vertexAttribData[8 * 4 * offset + 8 * 1 + 0] = width + x;
 	vertexAttribData[8 * 4 * offset + 8 * 1 + 1] = 0 + y;
 	vertexAttribData[8 * 4 * offset + 8 * 2 + 0] = 0 + x;
-	vertexAttribData[8 * 4 * offset + 8 * 2 + 1] = 100 + y;
-	vertexAttribData[8 * 4 * offset + 8 * 3 + 0] = 100 + x;
-	vertexAttribData[8 * 4 * offset + 8 * 3 + 1] = 100 + y;
+	vertexAttribData[8 * 4 * offset + 8 * 2 + 1] = height + y;
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 0] = width + x;
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 1] = height + y;
 }
 
 void TextureRegion::writeTexCoords(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
 {
-	// normalize texture coordinates
 	float normalizedTexCoords[] = {
 		tx / texture.width, ty / texture.height,
 		(tx + tw) / texture.width, ty / texture.height,
