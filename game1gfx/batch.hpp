@@ -44,6 +44,5 @@ public:
 	void flush();
 	void end();
 
-	void draw(const Texture &texture); // test
 	void draw(TextureRegion &textureRegion, float x, float y);
 };
