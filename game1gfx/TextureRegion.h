@@ -9,22 +9,36 @@ extern PyTypeObject glrenderer_TextureRegionType;
 
 class TextureRegion
 {
+protected:
 	void writeVertices(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y);
 	void writeTexCoords(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y);
 	void writeColors(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y);
+	
+	void computeTransformations();
+	GLfloat relativeVertices[8] = { 0 };
+
 public:
 	const Texture& texture;
 	GLfloat tx, ty, tw, th;
 	GLfloat width, height;
 	GLfloat color[4] = { 1, 1, 1, 1 };
+	GLfloat origin[2] = { 0 };
+	GLfloat angle = 0;
 
 	TextureRegion(const Texture& texture, int subX, int subY, int subWidth, int subHeight);
 	virtual ~TextureRegion();
 
-	void setAngle(float rads);
-	void setScaleX(float s);
-	void setScaleY(float s);
-	void transform(float angle, float sx, float sy);
+	float getOriginX() { return origin[0]; }
+	float getOriginY() { return origin[1]; }
+
+	float getAngle() { return angle; }
+	void setAngle(float rads) { angle = rads; }
+	
+	float getScaleX() { return width / tw; }
+	void setScaleX(float s) { width = s * tw; }
+	float getScaleY() { return height / th; }
+	void setScaleY(float s) { height = s * th; }
+	
 	void updateArray(std::vector<Batch::attributeType> &vertexAttribData, int objectIndex, GLfloat x, GLfloat y);
 };
 
