@@ -45,4 +45,6 @@ public:
 	void end();
 
 	void draw(TextureRegion &textureRegion, float x, float y);
+
+	size_t getBatchSize() { return maxBatchSize;  }
 };

@@ -42,7 +42,6 @@ static PyObject* spam_setviewport(PyObject *self, PyObject *args)
 
 struct glrenderer_Batch {
 	PyObject_HEAD
-	int batchSize;
 	Batch* _object;
 };
 
@@ -70,6 +69,7 @@ static int Batch_init(glrenderer_Batch *self, PyObject *args, PyObject *kwds) {
 static void Batch_dealloc(glrenderer_Batch* self) {
 	//Py_XDECREF(self->first);
 	delete self->_object;
+	// FIXME: ref fuckup
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -114,6 +114,13 @@ Batch_draw(glrenderer_Batch *self, PyObject *args, PyObject *kwds)
 	Py_RETURN_NONE;
 }
 
+static PyObject *
+Batch_getMaxQuads(glrenderer_Batch *self, void *closure)
+{
+	// FIXME: ref count
+	return PyLong_FromLong(self->_object->getBatchSize());
+}
+
 static PyMethodDef Batch_methods[] = {
 	{ "begin", (PyCFunction)Batch_begin, METH_NOARGS, NULL },
 	{ "flush", (PyCFunction)Batch_flush, METH_NOARGS, NULL },
@@ -123,6 +130,11 @@ static PyMethodDef Batch_methods[] = {
 };
 
 static PyMemberDef Batch_members[] = {
+	{ NULL }
+};
+
+static PyGetSetDef Batch_getset[] = {
+	{ "maxQuads",  (getter)Batch_getMaxQuads, 0, 0, 0 },
 	{ NULL }
 };
 
@@ -156,7 +168,7 @@ static PyTypeObject glrenderer_BatchType = {
 	0,
 	Batch_methods,
 	Batch_members,
-	0,
+	Batch_getset,
 	0,
 	0,
 	0,
