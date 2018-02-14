@@ -21,7 +21,6 @@ static int Texture_init(glrenderer_Texture *self, PyObject *args, PyObject *kwds
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "IIs#", kwlist, &width, &height, &data, &dataLen))
 		return -1;
 
-	printf("w/h: %d %d\n", width, height);
 	//self->textureObject->loadData(width, height, data);
 	self->textureObject = new Texture(width, height, data);
 
