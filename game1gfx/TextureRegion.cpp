@@ -36,15 +36,81 @@ static int TextureRegion_init(glrenderer_TextureRegion *self, PyObject *args, Py
 }
 
 static void TextureRegion_dealloc(glrenderer_TextureRegion* self) {
-	delete self->_object; // FIXME
+	delete self->_object; // FIXME: ref count?
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
-static PyMethodDef TextureRegion_methods[] = {
-	{ NULL }
-};
+static PyObject *
+TextureRegion_getWidth(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyFloat_FromDouble(self->_object->width);
+}
 
-static PyMemberDef TextureRegion_members[] = {
+static PyObject *
+TextureRegion_getHeight(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyFloat_FromDouble(self->_object->height);
+}
+
+static PyObject *
+TextureRegion_getColor(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	// FIXME: return a shared tuple
+	return PyTuple_Pack(
+		4,
+		PyLong_FromLong(self->_object->color[0]),
+		PyLong_FromLong(self->_object->color[1]),
+		PyLong_FromLong(self->_object->color[2]),
+		PyLong_FromLong(self->_object->color[3]),
+		PyLong_FromLong(self->_object->color[4])
+	);
+}
+
+static int
+TextureRegion_setColor(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	// FIXME: ref count?
+	float r, g, b, a;
+	if (!PyArg_ParseTuple(args, "ffff", &r, &g, &b, &a))
+		return -1;
+
+	self->_object->color[0] = r;
+	self->_object->color[1] = g;
+	self->_object->color[2] = b;
+	self->_object->color[3] = a;
+
+	return 0;
+}
+
+static int
+TextureRegion_setWidth(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	// FIXME: ref count?
+	float width;
+	if (!PyArg_Parse(args, "f", &width))
+		return -1;
+	self->_object->width = width;
+	return 0;
+}
+
+static int
+TextureRegion_setHeight(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	// FIXME: ref count?
+	float height;
+	if (!PyArg_Parse(args, "f", &height))
+		return -1;
+	self->_object->height = height;
+	return 0;
+}
+
+static PyGetSetDef TextureRegion_getset[] = {
+	{ "width",  (getter)TextureRegion_getWidth, (setter)TextureRegion_setWidth, 0, 0 },
+	{ "height",  (getter)TextureRegion_getHeight, (setter)TextureRegion_setHeight, 0, 0 },
+	{ "color",  (getter)TextureRegion_getColor, (setter)TextureRegion_setColor, 0, 0 },
 	{ NULL }
 };
 
@@ -76,9 +142,9 @@ PyTypeObject glrenderer_TextureRegionType = {
 	0,
 	0,
 	0,
-	TextureRegion_methods,
-	TextureRegion_members,
-	0,
+	0, //TextureRegion_methods,
+	0, //TextureRegion_members,
+	TextureRegion_getset,
 	0,
 	0,
 	0,
