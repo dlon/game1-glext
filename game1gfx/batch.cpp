@@ -66,10 +66,9 @@ void Batch::setupShaders() {
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &isCompiledV);
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &isCompiledF);
 
-	printf("vertex shader: %d\n", isCompiledV);
-	printf("fragment shader: %d\n", isCompiledF);
+	//printf("vertex shader: %d\n", isCompiledV);
+	//printf("fragment shader: %d\n", isCompiledF);
 	// TODO: cleanup
-
 	// TODO: error checking & exceptions
 
 	glAttachShader(program, vertexShader);
@@ -82,7 +81,7 @@ void Batch::setupShaders() {
 		GL_LINK_STATUS,
 		&isLinked
 	);
-	printf("link status: %d\n", isLinked);
+	//printf("link status: %d\n", isLinked);
 
 	glEnableVertexAttribArray(positionAttribute);
 	glEnableVertexAttribArray(texCoordAttribute);

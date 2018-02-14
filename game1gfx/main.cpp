@@ -5,39 +5,6 @@
 #include <gl/GL.h>
 #include "Texture.h"
 #include "TextureRegion.h"
-
-static PyObject* spam_setclearcolor(PyObject *self, PyObject *args)
-{
-	float r, g, b, a;
-	if (!PyArg_ParseTuple(args, "ffff", &r, &g, &b, &a))
-		return NULL;
-
-	printf("set color: %f %f %f %f\n", r, g, b, a);
-	glClearColor(r, g, b, a);
-
-	Py_RETURN_NONE;
-}
-
-static PyObject* spam_clear(PyObject *self, PyObject *args)
-{
-	//puts("clearing");
-	glClear(GL_COLOR_BUFFER_BIT);
-	Py_RETURN_NONE;
-}
-
-static PyObject* spam_setviewport(PyObject *self, PyObject *args)
-{
-	int x, y;
-	size_t w, h;
-	if (!PyArg_ParseTuple(args, "iiII", &x, &y, &w, &h))
-		return NULL;
-
-	printf("setviewport: %d %d %u %u\n", x, y, w, h);
-	glViewport(x, y, w, h);
-
-	Py_RETURN_NONE;
-}
-
 #include "batch.hpp"
 
 struct glrenderer_Batch {
@@ -54,22 +21,22 @@ static PyObject* Batch_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 			Py_DECREF(self);
 			return NULL;
 		}*/
+		// TODO: catch exception and return NULL
 		self->_object = new Batch(1000);
 	}
 	return (PyObject*)self;
 }
 
 static int Batch_init(glrenderer_Batch *self, PyObject *args, PyObject *kwds) {
-	/*size_t batchSize;
+	size_t batchSize;
 	if (!PyArg_ParseTuple(args, "I", &batchSize))
-		return -1;*/
+		return -1;
 	return 0;
 }
 
 static void Batch_dealloc(glrenderer_Batch* self) {
 	//Py_XDECREF(self->first);
 	delete self->_object;
-	// FIXME: ref fuckup
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -205,9 +172,6 @@ static PyObject* glrenderer_init(PyObject *self, PyObject *args) {
 // method table and initialization function
 
 static PyMethodDef methods[] = {
-	{ "setviewport", spam_setviewport, METH_VARARGS },
-	{ "setclearcolor", spam_setclearcolor, METH_VARARGS },
-	{ "clear", spam_clear, METH_VARARGS },
 	{ "init", glrenderer_init, METH_VARARGS },
 	0
 };
