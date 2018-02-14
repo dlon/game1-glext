@@ -209,11 +209,16 @@ void TextureRegion::writeVertices(std::vector<Batch::attributeType> &vertexAttri
 
 void TextureRegion::writeTexCoords(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
 {
+	float x0 = (flipX ? (tx + tw) : tx) / texture.width;
+	float x1 = (flipX ? tx : (tx + tw)) / texture.width;
+	float y0 = (flipY ? (ty + th) : ty) / texture.height;
+	float y1 = (flipY ? ty : (ty + th)) / texture.height;
+	
 	float normalizedTexCoords[] = {
-		tx / texture.width, ty / texture.height,
-		(tx + tw) / texture.width, ty / texture.height,
-		(tx) / texture.width, (ty + th) / texture.height,
-		(tx + tw) / texture.width, (ty + th) / texture.height,
+		x0, y0,
+		x1, y0,
+		x0, y1,
+		x1, y1,
 	};
 
 	vertexAttribData[8 * 4 * offset + 8 * 0 + 2] = normalizedTexCoords[0];

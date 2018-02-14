@@ -24,6 +24,8 @@ public:
 	GLfloat color[4] = { 1, 1, 1, 1 };
 	GLfloat origin[2] = { 0 };
 	GLfloat angle = 0;
+	bool flipX = false;
+	bool flipY = false;
 
 	TextureRegion(const Texture& texture, int subX, int subY, int subWidth, int subHeight);
 	virtual ~TextureRegion();
