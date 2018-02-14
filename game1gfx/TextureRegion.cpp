@@ -24,8 +24,6 @@ static int TextureRegion_init(glrenderer_TextureRegion *self, PyObject *args, Py
 		&subX, &subY, &subWidth, &subHeight))
 		return -1;
 
-	// TODO: get glrenderer_Texture
-
 	self->_object = new TextureRegion(
 		*texture->textureObject,
 		subX, subY,
@@ -118,15 +116,22 @@ void TextureRegion::writeVertices(std::vector<Batch::attributeType> &vertexAttri
 
 void TextureRegion::writeTexCoords(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
 {
-	// !TODO: replace with non-fixed values
-	vertexAttribData[8 * 4 * offset + 8 * 0 + 2] = 0;
-	vertexAttribData[8 * 4 * offset + 8 * 0 + 3] = 0;
-	vertexAttribData[8 * 4 * offset + 8 * 1 + 2] = 1;
-	vertexAttribData[8 * 4 * offset + 8 * 1 + 3] = 0;
-	vertexAttribData[8 * 4 * offset + 8 * 2 + 2] = 0;
-	vertexAttribData[8 * 4 * offset + 8 * 2 + 3] = 1;
-	vertexAttribData[8 * 4 * offset + 8 * 3 + 2] = 1;
-	vertexAttribData[8 * 4 * offset + 8 * 3 + 3] = 1;
+	// normalize texture coordinates
+	float normalizedTexCoords[] = {
+		tx / texture.width, ty / texture.height,
+		(tx + tw) / texture.width, ty / texture.height,
+		(tx) / texture.width, (ty + th) / texture.height,
+		(tx + tw) / texture.width, (ty + th) / texture.height,
+	};
+
+	vertexAttribData[8 * 4 * offset + 8 * 0 + 2] = normalizedTexCoords[0];
+	vertexAttribData[8 * 4 * offset + 8 * 0 + 3] = normalizedTexCoords[1];
+	vertexAttribData[8 * 4 * offset + 8 * 1 + 2] = normalizedTexCoords[2];
+	vertexAttribData[8 * 4 * offset + 8 * 1 + 3] = normalizedTexCoords[3];
+	vertexAttribData[8 * 4 * offset + 8 * 2 + 2] = normalizedTexCoords[4];
+	vertexAttribData[8 * 4 * offset + 8 * 2 + 3] = normalizedTexCoords[5];
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 2] = normalizedTexCoords[6];
+	vertexAttribData[8 * 4 * offset + 8 * 3 + 3] = normalizedTexCoords[7];
 }
 
 void TextureRegion::writeColors(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
