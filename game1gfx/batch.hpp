@@ -36,6 +36,7 @@ public:
 	
 	const static int vpMatrixUniform = 0;
 	const static int textureUniform = 1;
+	const static int mMatrixUniform = 2;
 
 	Batch(size_t maxBatchSize);
 	virtual ~Batch();

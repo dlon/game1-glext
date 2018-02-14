@@ -10,7 +10,7 @@
 const char vertexShaderSource[] = R"(#version 440
 
 layout(location = 0) uniform mat3 vpMatrix;
-//layout(location = 2) uniform mat3 mMatrix;
+layout(location = 2) uniform mat3 mMatrix;
 
 layout(location = 0) in vec2 vPosition;
 layout(location = 1) in vec2 vTexCoord0;
@@ -20,8 +20,8 @@ out vec2 texCoord0;
 out vec4 vertColor;
 
 void main(void) {
-	//gl_Position = vec4(vpMatrix * mMatrix * vec3(vPosition, 1.0), 1.0);
-	gl_Position = vec4(vpMatrix * vec3(vPosition, 1.0), 1.0);
+	gl_Position = vec4(vpMatrix * mMatrix * vec3(vPosition, 1.0), 1.0);
+	//gl_Position = vec4(vpMatrix * vec3(vPosition, 1.0), 1.0);
 	texCoord0 = vTexCoord0;
 	vertColor = vVertColor;
 })";
@@ -106,6 +106,12 @@ void Batch::setupShaders() {
 			}
 		}
 	}
+
+	GLfloat mMatrix[3][3] = {
+		{ 1, 0, 0 },
+		{ 0, 1, 0 },
+		{ 0, 0, 1 }
+	};
 	
 	glUseProgram(program);
 	glUniformMatrix3fv(
@@ -113,6 +119,12 @@ void Batch::setupShaders() {
 		1,
 		GL_FALSE,
 		(GLfloat*)matrix
+	);
+	glUniformMatrix3fv(
+		mMatrixUniform,
+		1,
+		GL_FALSE,
+		(GLfloat*)mMatrix
 	);
 	glUniform1i(textureUniform, 0);
 }
