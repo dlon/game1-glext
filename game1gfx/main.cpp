@@ -95,16 +95,21 @@ Batch_flush(glrenderer_Batch *self)
 }
 
 static PyObject *
-Batch_draw(glrenderer_Batch *self, PyObject *arg)
+Batch_draw(glrenderer_Batch *self, PyObject *args, PyObject *kwds)
 {
-	Py_INCREF(arg);
-	
-	//self->_object->draw(*((glrenderer_Texture*)arg)->textureObject);
-	// TODO: error checking
-	// TODO: position parameters
-	self->_object->draw(*((glrenderer_TextureRegion*)arg)->_object, 10, 10);
+	float x = 0;
+	float y = 0;
+	glrenderer_TextureRegion* region = NULL;
 
-	Py_DECREF(arg);
+	static char *kwlist[] = { "textureRegion", "x", "y", 0 };
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!ff", kwlist,
+		&glrenderer_TextureRegionType, &region,
+		&x, &y))
+		return 	NULL;
+	
+	// TODO: error checking
+	// TODO: memory handling?
+	self->_object->draw(*(region->_object), x, y);
 
 	Py_RETURN_NONE;
 }
@@ -113,7 +118,7 @@ static PyMethodDef Batch_methods[] = {
 	{ "begin", (PyCFunction)Batch_begin, METH_NOARGS, NULL },
 	{ "flush", (PyCFunction)Batch_flush, METH_NOARGS, NULL },
 	{ "end", (PyCFunction)Batch_end, METH_NOARGS, NULL },
-	{ "draw", (PyCFunction)Batch_draw, METH_O, NULL },
+	{ "draw", (PyCFunction)Batch_draw, METH_VARARGS | METH_KEYWORDS, NULL },
 	{ NULL }
 };
 
