@@ -276,6 +276,29 @@ static PyGetSetDef TextureRegion_getset[] = {
 	{ NULL }
 };
 
+static PyObject *
+TextureRegion_transform(glrenderer_TextureRegion *self, PyObject *args)
+{
+	float scaleX;
+	float scaleY;
+	float angle;
+	if (!PyArg_ParseTuple(
+		args, "fff",
+		&angle,
+		&scaleX,
+		&scaleY))
+		return NULL;
+	self->_object->setAngle(angle);
+	self->_object->setScaleX(scaleX);
+	self->_object->setScaleY(scaleY);
+	Py_RETURN_NONE;
+}
+
+static PyMethodDef TextureRegion_methods[] = {
+	{ "transform",  (PyCFunction)TextureRegion_transform, METH_VARARGS, 0 },
+	{ NULL }
+};
+
 PyTypeObject glrenderer_TextureRegionType = {
 	PyObject_HEAD_INIT(NULL, 0)
 	"glrenderer.TextureRegion",        /*tp_name*/
@@ -304,7 +327,7 @@ PyTypeObject glrenderer_TextureRegionType = {
 	0,
 	0,
 	0,
-	0, //TextureRegion_methods,
+	TextureRegion_methods,
 	0, //TextureRegion_members,
 	TextureRegion_getset,
 	0,
