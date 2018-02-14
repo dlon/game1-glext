@@ -88,6 +88,13 @@ Batch_getMaxQuads(glrenderer_Batch *self, void *closure)
 	return PyLong_FromLong(self->_object->getBatchSize());
 }
 
+static PyObject *
+Batch_getProgram(glrenderer_Batch *self, void *closure)
+{
+	// FIXME: ref count
+	return PyLong_FromSize_t(self->_object->getProgram());
+}
+
 static PyMethodDef Batch_methods[] = {
 	{ "begin", (PyCFunction)Batch_begin, METH_NOARGS, NULL },
 	{ "flush", (PyCFunction)Batch_flush, METH_NOARGS, NULL },
@@ -102,6 +109,7 @@ static PyMemberDef Batch_members[] = {
 
 static PyGetSetDef Batch_getset[] = {
 	{ "maxQuads",  (getter)Batch_getMaxQuads, 0, 0, 0 },
+	{ "program",  (getter)Batch_getProgram, 0, 0, 0 },
 	{ NULL }
 };
 

@@ -47,4 +47,5 @@ public:
 	void draw(TextureRegion &textureRegion, float x, float y);
 
 	size_t getBatchSize() { return maxBatchSize;  }
+	GLuint getProgram() { return program; }
 };
