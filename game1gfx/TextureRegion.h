@@ -42,6 +42,8 @@ public:
 	void setScaleY(float s) { height = s * th; }
 	
 	void updateArray(std::vector<Batch::attributeType> &vertexAttribData, int objectIndex, GLfloat x, GLfloat y);
+
+	void getNormalizedTexCoords(float ret[]);
 };
 
 struct glrenderer_TextureRegion {

@@ -239,6 +239,26 @@ TextureRegion_getTexture(glrenderer_TextureRegion *self, void *closure)
 	return PyLong_FromSize_t(self->_object->texture.texture);
 }
 
+static PyObject *
+TextureRegion_getNormalizedTexCoords(glrenderer_TextureRegion *self, void *closure)
+{
+	// TODO: return texture python object?
+	// FIXME: store in a list
+	float coords[8];
+	self->_object->getNormalizedTexCoords(coords);
+	return Py_BuildValue(
+		"ffffffff",
+		PyFloat_FromDouble(coords[0]),
+		PyFloat_FromDouble(coords[1]),
+		PyFloat_FromDouble(coords[2]),
+		PyFloat_FromDouble(coords[3]),
+		PyFloat_FromDouble(coords[4]),
+		PyFloat_FromDouble(coords[5]),
+		PyFloat_FromDouble(coords[6]),
+		PyFloat_FromDouble(coords[7])
+	);
+}
+
 static PyGetSetDef TextureRegion_getset[] = {
 	{ "width",  (getter)TextureRegion_getWidth, (setter)TextureRegion_setWidth, 0, 0 },
 	{ "height",  (getter)TextureRegion_getHeight, (setter)TextureRegion_setHeight, 0, 0 },
@@ -252,6 +272,7 @@ static PyGetSetDef TextureRegion_getset[] = {
 	{ "flipX",  (getter)TextureRegion_getFlipX, (setter)TextureRegion_setFlipX, 0, 0 },
 	{ "flipY",  (getter)TextureRegion_getFlipY, (setter)TextureRegion_setFlipY, 0, 0 },
 	{ "texture",  (getter)TextureRegion_getTexture, 0, 0, 0 },
+	{ "normalizedCoords", (getter)TextureRegion_getNormalizedTexCoords, 0, 0, 0 },
 	{ NULL }
 };
 
@@ -345,6 +366,23 @@ void TextureRegion::writeVertices(std::vector<Batch::attributeType> &vertexAttri
 	vertexAttribData[8 * 4 * offset + 8 * 2 + 1] = relativeVertices[5] + y;
 	vertexAttribData[8 * 4 * offset + 8 * 3 + 0] = relativeVertices[6] + x;
 	vertexAttribData[8 * 4 * offset + 8 * 3 + 1] = relativeVertices[7] + y;
+}
+
+void TextureRegion::getNormalizedTexCoords(float ret[])
+{
+	float x0 = (flipX ? (tx + tw) : tx) / texture.width;
+	float x1 = (flipX ? tx : (tx + tw)) / texture.width;
+	float y0 = (flipY ? (ty + th) : ty) / texture.height;
+	float y1 = (flipY ? ty : (ty + th)) / texture.height;
+
+	ret[0] = x0;
+	ret[1] = y0;
+	ret[2] = x1;
+	ret[3] = y0;
+	ret[4] = x0;
+	ret[5] = y1;
+	ret[6] = x1;
+	ret[7] = y1;
 }
 
 void TextureRegion::writeTexCoords(std::vector<Batch::attributeType> &vertexAttribData, int offset, GLfloat x, GLfloat y)
