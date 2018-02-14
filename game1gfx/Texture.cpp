@@ -54,9 +54,13 @@ Texture_getHeight(glrenderer_Texture *self)
 }
 
 static PyMethodDef Texture_methods[] = {
-	{ "id", (PyCFunction)Texture_id, METH_NOARGS, NULL },
-	{ "width", (PyCFunction)Texture_getWidth, METH_NOARGS, NULL },
-	{ "height", (PyCFunction)Texture_getHeight, METH_NOARGS, NULL },
+	{ NULL }
+};
+
+static PyGetSetDef Texture_getset[] = {
+	{ "texture", (getter)Texture_id, 0, 0, 0 },
+	{ "width", (getter)Texture_getWidth, 0, 0, 0 },
+	{ "height", (getter)Texture_getHeight, 0, 0, 0 },
 	{ NULL }
 };
 
@@ -92,9 +96,9 @@ PyTypeObject glrenderer_TextureType = {
 	0,
 	0,
 	0,
-	Texture_methods,
-	Texture_members,
-	0,
+	0,//Texture_methods,
+	0,//Texture_members,
+	Texture_getset,
 	0,
 	0,
 	0,
