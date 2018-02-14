@@ -231,6 +231,14 @@ TextureRegion_getSubHeight(glrenderer_TextureRegion *self, void *closure)
 	return PyFloat_FromDouble(self->_object->th);
 }
 
+static PyObject *
+TextureRegion_getTexture(glrenderer_TextureRegion *self, void *closure)
+{
+	// !!!FIXME: ref count!
+	// TODO: return texture python object, not ID
+	return PyLong_FromSize_t(self->_object->texture.texture);
+}
+
 static PyGetSetDef TextureRegion_getset[] = {
 	{ "width",  (getter)TextureRegion_getWidth, (setter)TextureRegion_setWidth, 0, 0 },
 	{ "height",  (getter)TextureRegion_getHeight, (setter)TextureRegion_setHeight, 0, 0 },
@@ -243,6 +251,7 @@ static PyGetSetDef TextureRegion_getset[] = {
 	{ "scaleY",  (getter)TextureRegion_getScaleY, (setter)TextureRegion_setScaleY, 0, 0 },
 	{ "flipX",  (getter)TextureRegion_getFlipX, (setter)TextureRegion_setFlipX, 0, 0 },
 	{ "flipY",  (getter)TextureRegion_getFlipY, (setter)TextureRegion_setFlipY, 0, 0 },
+	{ "texture",  (getter)TextureRegion_getTexture, 0, 0, 0 },
 	{ NULL }
 };
 
