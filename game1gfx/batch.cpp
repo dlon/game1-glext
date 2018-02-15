@@ -171,6 +171,8 @@ Batch::Batch(size_t maxBatchSize) {
 
 	glEnable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0);
+
+	setBlendMode(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 Batch::~Batch() {
@@ -242,6 +244,12 @@ void Batch::flush() {
 
 void Batch::draw(TextureRegion &textureRegion, float x, float y)
 {
+	if (blendSwitchDest != blendSrc || blendSwitchDest != blendDest) {
+		flush();
+		blendSrc = blendSwitchSrc;
+		blendDest = blendSwitchDest;
+		glBlendFunc(blendSrc, blendDest);
+	}
 	if (currentTexture != textureRegion.texture.texture) {
 		flush();
 		currentTexture = textureRegion.texture.texture;
@@ -258,4 +266,16 @@ void Batch::draw(TextureRegion &textureRegion, float x, float y)
 	);
 
 	objectIndex++;
+}
+
+void Batch::getBlendMode(GLenum ret[2])
+{
+	ret[0] = blendSwitchSrc;
+	ret[1] = blendSwitchDest;
+}
+
+void Batch::setBlendMode(GLenum src, GLenum dest)
+{
+	blendSwitchSrc = src;
+	blendSwitchDest = dest;
 }

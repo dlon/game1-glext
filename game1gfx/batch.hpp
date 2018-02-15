@@ -29,6 +29,9 @@ protected:
 	int objectIndex;
 	GLuint currentTexture;
 
+	GLenum blendSrc = 0, blendDest = 0;
+	GLenum blendSwitchSrc = 0, blendSwitchDest = 0;
+
 public:
 	const static int positionAttribute = 0;
 	const static int texCoordAttribute = 1;
@@ -40,6 +43,9 @@ public:
 
 	Batch(size_t maxBatchSize);
 	virtual ~Batch();
+
+	void setBlendMode(GLenum src, GLenum dest);
+	void getBlendMode(GLenum ret[2]);
 
 	void begin();
 	void flush();

@@ -95,6 +95,29 @@ Batch_getProgram(glrenderer_Batch *self, void *closure)
 	return PyLong_FromSize_t(self->_object->getProgram());
 }
 
+static PyObject *
+Batch_getBlendMode(glrenderer_Batch *self, void *closure)
+{
+	GLenum mode[2];
+	self->_object->getBlendMode(mode);
+	return Py_BuildValue(
+		"II",
+		mode[0],
+		mode[1]
+	);
+}
+
+static int
+Batch_setBlendMode(glrenderer_Batch *self, PyObject *args, void *closure)
+{
+	GLenum mode[2];
+	if (!PyArg_ParseTuple(args, "II",
+		&mode[0], &mode[1]))
+		return -1; // TODO: set an exception
+	self->_object->setBlendMode(mode[0], mode[1]);
+	return 0;
+}
+
 static PyMethodDef Batch_methods[] = {
 	{ "begin", (PyCFunction)Batch_begin, METH_NOARGS, NULL },
 	{ "flush", (PyCFunction)Batch_flush, METH_NOARGS, NULL },
@@ -110,6 +133,7 @@ static PyMemberDef Batch_members[] = {
 static PyGetSetDef Batch_getset[] = {
 	{ "maxQuads",  (getter)Batch_getMaxQuads, 0, 0, 0 },
 	{ "program",  (getter)Batch_getProgram, 0, 0, 0 },
+	{ "blendMode",  (getter)Batch_getBlendMode, (setter)Batch_setBlendMode, 0, 0 },
 	{ NULL }
 };
 
