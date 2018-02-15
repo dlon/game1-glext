@@ -248,14 +248,14 @@ TextureRegion_getNormalizedTexCoords(glrenderer_TextureRegion *self, void *closu
 	self->_object->getNormalizedTexCoords(coords);
 	return Py_BuildValue(
 		"ffffffff",
-		PyFloat_FromDouble(coords[0]),
-		PyFloat_FromDouble(coords[1]),
-		PyFloat_FromDouble(coords[2]),
-		PyFloat_FromDouble(coords[3]),
-		PyFloat_FromDouble(coords[4]),
-		PyFloat_FromDouble(coords[5]),
-		PyFloat_FromDouble(coords[6]),
-		PyFloat_FromDouble(coords[7])
+		coords[0],
+		coords[1],
+		coords[2],
+		coords[3],
+		coords[4],
+		coords[5],
+		coords[6],
+		coords[7]
 	);
 }
 

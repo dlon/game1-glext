@@ -114,6 +114,8 @@ void Texture::loadData(int width, int height, const unsigned char *data)
 {
 	// TODO: exception if it's already loaded
 
+	glEnable(GL_TEXTURE_2D);
+
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 

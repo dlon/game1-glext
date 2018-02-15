@@ -212,6 +212,8 @@ void Batch::begin() {
 		8 * sizeof(attributeType),
 		(const GLvoid*)(4 * sizeof(attributeType))
 	);
+
+	glUseProgram(program);
 }
 
 void Batch::end() {
