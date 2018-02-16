@@ -62,11 +62,11 @@ TextureRegion_getColor(glrenderer_TextureRegion *self, void *closure)
 	// FIXME: return a shared tuple
 	return PyTuple_Pack(
 		4,
-		PyLong_FromLong(self->_object->color[0]),
-		PyLong_FromLong(self->_object->color[1]),
-		PyLong_FromLong(self->_object->color[2]),
-		PyLong_FromLong(self->_object->color[3]),
-		PyLong_FromLong(self->_object->color[4])
+		PyFloat_FromDouble(self->_object->color[0]),
+		PyFloat_FromDouble(self->_object->color[1]),
+		PyFloat_FromDouble(self->_object->color[2]),
+		PyFloat_FromDouble(self->_object->color[3]),
+		PyFloat_FromDouble(self->_object->color[4])
 	);
 }
 
