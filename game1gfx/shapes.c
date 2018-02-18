@@ -130,9 +130,14 @@ void setUpShaders(ShapeBatch *self)
 
 static PyObject* ShapeBatch_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-	ShapeBatch *self = type->tp_alloc(type, sizeof(ShapeBatch));
+	ShapeBatch *self = type->tp_alloc(type, 0);
 	if (self) {
-		self->color = PyTuple_Pack(4, 1, 1, 1, 1);
+		float r, g, b, a;
+		r = 1.0f;
+		g = 1.0f;
+		b = 1.0f;
+		a = 1.0f;
+		self->color = Py_BuildValue("(ffff)", r, g, b, a);
 		if (!self->color) {
 			Py_DECREF(self);
 			return NULL;
@@ -152,7 +157,7 @@ static void ShapeBatch_dealloc(ShapeBatch *self)
 
 	free(self->vertexData);
 	Py_XDECREF(self->color);
-	Py_TYPE(self)->tp_dealloc(self);
+	Py_TYPE(self)->tp_free(self);
 }
 
 static int ShapeBatch_init(ShapeBatch *self, PyObject *args, PyObject *kwds)
@@ -252,46 +257,46 @@ static PyMethodDef ShapeBatch_methods[] = {
 
 static PyMemberDef ShapeBatch_members[] = {
 	{ "color", T_OBJECT_EX, offsetof(ShapeBatch, color), 0, 0 },
-	{ NULL }
+	{ 0 }
 };
 
 PyTypeObject ShapeBatch_type = {
-	PyVarObject_HEAD_INIT(NULL, 0)
-	sizeof(ShapeBatch),             /* tp_basicsize */
-	0,                         /* tp_itemsize */
-	(destructor)ShapeBatch_dealloc, /* tp_dealloc */
-	0,                         /* tp_print */
-	0,                         /* tp_getattr */
-	0,                         /* tp_setattr */
-	0,                         /* tp_reserved */
-	0,                         /* tp_repr */
-	0,                         /* tp_as_number */
-	0,                         /* tp_as_sequence */
-	0,                         /* tp_as_mapping */
-	0,                         /* tp_hash  */
-	0,                         /* tp_call */
-	0,                         /* tp_str */
-	0,                         /* tp_getattro */
-	0,                         /* tp_setattro */
-	0,                         /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT |
-	Py_TPFLAGS_BASETYPE,   /* tp_flags */
-	0,           /* tp_doc */
-	0,                         /* tp_traverse */
-	0,                         /* tp_clear */
-	0,                         /* tp_richcompare */
-	0,                         /* tp_weaklistoffset */
-	0,                         /* tp_iter */
-	0,                         /* tp_iternext */
-	ShapeBatch_methods,             /* tp_methods */
-	ShapeBatch_members,             /* tp_members */
-	0,                         /* tp_getset */
-	0,                         /* tp_base */
-	0,                         /* tp_dict */
-	0,                         /* tp_descr_get */
-	0,                         /* tp_descr_set */
-	0,                         /* tp_dictoffset */
-	(initproc)ShapeBatch_init,      /* tp_init */
-	0,                         /* tp_alloc */
-	ShapeBatch_new,                 /* tp_new */
+	PyObject_HEAD_INIT(NULL, 0)
+	"glrenderer.ShapeBatch",        /*tp_name*/
+	sizeof(ShapeBatch),  /*tp_basicsize*/
+	0,                         /*tp_itemsize*/
+	(destructor)ShapeBatch_dealloc, /*tp_dealloc*/
+	0,                         /*tp_print*/
+	0,                         /*tp_getattr*/
+	0,                         /*tp_setattr*/
+	0,                         /*tp_compare*/
+	0,                         /*tp_repr*/
+	0,                         /*tp_as_number*/
+	0,                         /*tp_as_sequence*/
+	0,                         /*tp_as_mapping*/
+	0,                         /*tp_hash */
+	0,                         /*tp_call*/
+	0,                         /*tp_str*/
+	0,                         /*tp_getattro*/
+	0,                         /*tp_setattro*/
+	0,                         /*tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+	NULL, /*tp_doc*/
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	ShapeBatch_methods,
+	ShapeBatch_members,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	(initproc)ShapeBatch_init,
+	0,
+	ShapeBatch_new
 };
