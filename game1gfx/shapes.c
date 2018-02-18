@@ -418,11 +418,11 @@ static PyObject *ShapeBatch_rectangle(ShapeBatch *self, PyObject *args)
 	self->vertexData[i + 6 * 5 + 0] = x + w;
 	self->vertexData[i + 6 * 5 + 1] = y + h;
 
-	for (int i = 0; i < 6; i++) {
-		self->vertexData[i + 6 * i + 2] = r;
-		self->vertexData[i + 6 * i + 3] = g;
-		self->vertexData[i + 6 * i + 4] = b;
-		self->vertexData[i + 6 * i + 5] = a;
+	for (int j = 0; j < 6; j++) {
+		self->vertexData[i + 6 * j + 2] = r;
+		self->vertexData[i + 6 * j + 3] = g;
+		self->vertexData[i + 6 * j + 4] = b;
+		self->vertexData[i + 6 * j + 5] = a;
 	}
 
 	self->vertCount += 6;
