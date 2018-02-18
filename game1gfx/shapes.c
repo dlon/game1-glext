@@ -4,6 +4,8 @@
 
 typedef struct {
 	PyObject_HEAD
+	GLuint vertexShader;
+	GLuint fragmentShader;
 	GLuint program;
 	GLuint vbo;
 	GLuint vao;
@@ -56,32 +58,28 @@ void setUpShaders(ShapeBatch *self)
 	const char* vshaders[] = { vertexShaderSource };
 	const char* fshaders[] = { fragmentShaderSource };
 
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	self->vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(
-		vertexShader,
+		self->vertexShader,
 		1,
 		vshaders,
 		NULL
 	);
-	glCompileShader(vertexShader);
+	glCompileShader(self->vertexShader);
 
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	self->fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(
-		fragmentShader,
+		self->fragmentShader,
 		1,
 		fshaders,
 		NULL
 	);
-	glCompileShader(fragmentShader);
-
-	// TODO: delete shaders
+	glCompileShader(self->fragmentShader);
 
 	self->program = glCreateProgram();
 
-	// TODO: delete program
-
-	glAttachShader(self->program, vertexShader);
-	glAttachShader(self->program, fragmentShader);
+	glAttachShader(self->program, self->vertexShader);
+	glAttachShader(self->program, self->fragmentShader);
 	glLinkProgram(self->program);
 
 	glEnableVertexAttribArray(0); // vertex position attrib
@@ -145,6 +143,10 @@ static PyObject* ShapeBatch_new(PyTypeObject *type, PyObject *args, PyObject *kw
 
 static void ShapeBatch_dealloc(ShapeBatch *self)
 {
+	glDeleteShader(self->fragmentShader);
+	glDeleteShader(self->vertexShader);
+	glDeleteProgram(self->program);
+
 	glDeleteBuffers(1, &self->vbo);
 	glDeleteVertexArrays(1, &self->vao);
 
@@ -169,6 +171,8 @@ static int ShapeBatch_init(ShapeBatch *self, PyObject *args, PyObject *kwds)
 		return -1;
 	}
 	memset(self->vertexData, 0, 6 * sizeof(GLfloat) * self->maxVertices);
+
+	setUpShaders(self);
 
 	glGenBuffers(1, &self->vbo);
 	glGenVertexArrays(1, &self->vao);
