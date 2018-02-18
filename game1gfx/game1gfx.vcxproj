@@ -167,12 +167,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="shapes.c" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureRegion.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="batch.hpp" />
     <ClInclude Include="glutil.hpp" />
+    <ClInclude Include="shapes.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureRegion.h" />
   </ItemGroup>
