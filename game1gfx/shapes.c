@@ -1,6 +1,9 @@
 #include <Python.h>
 #include <structmember.h>
 #include "glutil.hpp"
+#include <math.h>
+
+#define PI 3.14159265
 
 typedef struct {
 	PyObject_HEAD
@@ -148,7 +151,7 @@ void setUpShaders(ShapeBatch *self)
 		(GLfloat*)mMatrix
 	);
 
-	glEnable(GL_PROGRAM_POINT_SIZE);
+	//glEnable(GL_PROGRAM_POINT_SIZE); // TODO
 }
 
 static PyObject* ShapeBatch_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -318,10 +321,107 @@ static PyObject *ShapeBatch_lineStrip(ShapeBatch *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
+static PyObject *ShapeBatch_lines(ShapeBatch *self, PyObject *args)
+{
+	if (self->type != GL_LINES) {
+		end(self);
+		self->type = GL_LINES;
+	}
+	updateData(self, args);
+	Py_RETURN_NONE;
+}
+
+static PyObject *ShapeBatch_triangles(ShapeBatch *self, PyObject *args)
+{
+	if (self->type != GL_TRIANGLES) {
+		end(self);
+		self->type = GL_TRIANGLES;
+	}
+	updateData(self, args);
+	Py_RETURN_NONE;
+}
+
+static PyObject *ShapeBatch_triangleFan(ShapeBatch *self, PyObject *args)
+{
+	if (self->type != GL_TRIANGLE_FAN) {
+		end(self);
+		self->type = GL_TRIANGLE_FAN;
+	}
+	updateData(self, args);
+	Py_RETURN_NONE;
+}
+
+static PyObject *ShapeBatch_triangleStrip(ShapeBatch *self, PyObject *args)
+{
+	if (self->type != GL_TRIANGLE_STRIP) {
+		end(self);
+		self->type = GL_TRIANGLE_STRIP;
+	}
+	updateData(self, args);
+	Py_RETURN_NONE;
+}
+
+static PyObject *ShapeBatch_points(ShapeBatch *self, PyObject *args)
+{
+	if (self->type != GL_POINTS) {
+		end(self);
+		self->type = GL_POINTS;
+	}
+	updateData(self, args);
+	Py_RETURN_NONE;
+}
+
+static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
+{
+	if (self->type != GL_TRIANGLE_FAN) {
+		end(self);
+		self->type = GL_TRIANGLE_FAN;
+	}
+	
+	float x, y, radius;
+	size_t smoothness = 40;
+	if (!PyArg_ParseTuple(args, "fff|I",
+		&x, &y, &radius, &smoothness))
+		return -1;
+
+	if (self->vertCount + smoothness > self->maxVertices)
+		end(self);
+
+	size_t pCount = self->vertCount + smoothness;
+	size_t ppCount = self->vertCount;
+
+	float r = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 0));
+	float g = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 1));
+	float b = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 2));
+	float a = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3));
+
+	for (Py_ssize_t i = ppCount; i < pCount; i++)
+	{
+		self->vertexData[6 * i + 0] =
+			x + radius * cos((float)(i - ppCount) / smoothness * 2.0f * PI);
+		self->vertexData[6 * i + 1] =
+			y + radius * sin((float)(i - ppCount) / smoothness * 2.0f * PI);
+		self->vertexData[6 * i + 2] = r;
+		self->vertexData[6 * i + 3] = g;
+		self->vertexData[6 * i + 4] = b;
+		self->vertexData[6 * i + 5] = a;
+	}
+
+	self->vertCount += smoothness;
+
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef ShapeBatch_methods[] = {
 	{ "begin", (PyCFunction)ShapeBatch_begin, METH_NOARGS, 0 },
 	{ "end", (PyCFunction)ShapeBatch_end, METH_NOARGS, 0 },
 	{ "drawLineStrip", ShapeBatch_lineStrip, METH_VARARGS, 0 },
+	{ "drawLines", ShapeBatch_lines, METH_VARARGS, 0 },
+	{ "drawTriangles", ShapeBatch_triangles, METH_VARARGS, 0 },
+	{ "drawTriangleStrip", ShapeBatch_triangleStrip, METH_VARARGS, 0 },
+	{ "drawTriangleFan", ShapeBatch_triangleFan, METH_VARARGS, 0 },
+	{ "drawPoints", ShapeBatch_points, METH_VARARGS, 0 },
+	{ "drawCircle", ShapeBatch_circle, METH_VARARGS, 0 },
 	{ 0 }
 };
 
