@@ -22,6 +22,10 @@ void(*glDeleteProgram)(GLuint program) = NULL;
 void(*glGetProgramiv)(GLuint program,
 	GLenum pname,
 	GLint *params) = NULL;
+void(*glGetProgramInfoLog)(GLuint shader,
+	GLsizei maxLength,
+	GLsizei *length,
+	GLchar *infoLog) = NULL;
 
 GLuint(*glCreateShader)(GLenum shaderType) = NULL;
 void(*glShaderSource)(GLuint shader,
@@ -34,6 +38,10 @@ void(*glDeleteShader)(GLuint shader) = NULL;
 void(*glGetShaderiv)(GLuint shader,
 	GLenum pname,
 	GLint *params) = NULL;
+void(*glGetShaderInfoLog)(GLuint shader,
+	GLsizei maxLength,
+	GLsizei *length,
+	GLchar *infoLog) = NULL;
 
 void(*glActiveTexture)(GLenum texture) = NULL;
 
@@ -66,6 +74,29 @@ void(*glUniform4f)(GLint location,
 	GLfloat v2,
 	GLfloat v3) = NULL;
 
+static char infoBuffer[1000];
+
+void printProgramInfoLog(GLuint program)
+{
+	glGetProgramInfoLog(
+		program,
+		sizeof(infoBuffer),
+		0,
+		infoBuffer
+	);
+	puts(infoBuffer);
+}
+
+void printShaderInfoLog(GLuint shader)
+{
+	glGetShaderInfoLog(
+		shader,
+		sizeof(infoBuffer),
+		0,
+		infoBuffer
+	);
+	puts(infoBuffer);
+}
 
 void loadGLFunctions() {
 	glEnableVertexAttribArray = (void(*)(GLuint))wglGetProcAddress("glEnableVertexAttribArray");
@@ -98,6 +129,15 @@ void loadGLFunctions() {
 	glGetShaderiv = (void(*)(GLuint shader,
 		GLenum pname,
 		GLint *params))wglGetProcAddress("glGetShaderiv");
+	
+	glGetShaderInfoLog = (void(*)(GLuint shader,
+		GLsizei maxLength,
+		GLsizei *length,
+		GLchar *infoLog))wglGetProcAddress("glGetShaderInfoLog");
+	glGetProgramInfoLog = (void(*)(GLuint shader,
+		GLsizei maxLength,
+		GLsizei *length,
+		GLchar *infoLog))wglGetProcAddress("glGetProgramInfoLog");
 
 	glActiveTexture = (void(*)(GLenum))wglGetProcAddress("glActiveTexture");
 	

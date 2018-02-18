@@ -76,11 +76,31 @@ void setUpShaders(ShapeBatch *self)
 	);
 	glCompileShader(self->fragmentShader);
 
+	// TODO: error handling
+	GLint isCompiledV = 0;
+	GLint isCompiledF = 0;
+	glGetShaderiv(self->vertexShader, GL_COMPILE_STATUS, &isCompiledV);
+	glGetShaderiv(self->fragmentShader, GL_COMPILE_STATUS, &isCompiledF);
+	//printf("vertex shader: %d\n", isCompiledV);
+	//printf("fragment shader: %d\n", isCompiledF);
+	printShaderInfoLog(self->vertexShader);
+	printShaderInfoLog(self->fragmentShader);
+
 	self->program = glCreateProgram();
 
 	glAttachShader(self->program, self->vertexShader);
 	glAttachShader(self->program, self->fragmentShader);
 	glLinkProgram(self->program);
+
+	// TODO: error handling
+	GLint isLinked = 0;
+	glGetProgramiv(
+		self->program,
+		GL_LINK_STATUS,
+		&isLinked
+	);
+	//printf("link status: %d\n", isLinked);
+	printProgramInfoLog(self->program);
 
 	glEnableVertexAttribArray(0); // vertex position attrib
 	glEnableVertexAttribArray(1); // vertex color attrib

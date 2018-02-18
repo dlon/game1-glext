@@ -41,6 +41,15 @@ extern "C" {
 		GLenum pname,
 		GLint *params);
 
+	extern void(*glGetProgramInfoLog)(GLuint shader,
+		GLsizei maxLength,
+		GLsizei *length,
+		GLchar *infoLog);
+	extern void(*glGetShaderInfoLog)(GLuint shader,
+		GLsizei maxLength,
+		GLsizei *length,
+		GLchar *infoLog);
+
 	extern void(*glActiveTexture)(GLenum texture);
 
 	extern void(*glDeleteBuffers)(GLsizei n, const GLuint * buffers);
@@ -71,6 +80,9 @@ extern "C" {
 		GLfloat v1,
 		GLfloat v2,
 		GLfloat v3);
+
+	extern void printShaderInfoLog(GLuint shader);
+	extern void printProgramInfoLog(GLuint program);
 
 #ifdef __cplusplus
 }
