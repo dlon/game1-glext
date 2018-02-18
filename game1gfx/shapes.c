@@ -426,6 +426,7 @@ static PyObject *ShapeBatch_rectangle(ShapeBatch *self, PyObject *args)
 	}
 
 	self->vertCount += 6;
+	Py_RETURN_NONE;
 }
 
 static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
