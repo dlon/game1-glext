@@ -220,10 +220,10 @@ static PyObject *ShapeBatch_begin(ShapeBatch *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
-static PyObject *ShapeBatch_end(ShapeBatch *self, PyObject *args)
+static void end(ShapeBatch *self)
 {
 	if (!self->type)
-		Py_RETURN_NONE;
+		return;
 
 	glBindVertexArray(self->vao);
 
@@ -245,13 +245,60 @@ static PyObject *ShapeBatch_end(ShapeBatch *self, PyObject *args)
 
 	self->vertCount = 0;
 	self->type = 0;
+}
 
+static PyObject *ShapeBatch_end(ShapeBatch *self, PyObject *args)
+{
+	end(self);
+	Py_RETURN_NONE;
+}
+
+static void updateData(ShapeBatch *self, PyObject *args)
+{
+	float x, y;
+	Py_ssize_t verts = PyTuple_GET_SIZE(args);
+	Py_ssize_t pointsNum = verts / 2;
+
+	if (self->vertCount + pointsNum > self->maxVertices)
+		end(self);
+
+	size_t pCount = self->vertCount + pointsNum;
+	size_t ppCount = self->vertCount;
+
+	float r = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 0));
+	float g = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 1));
+	float b = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 2));
+	float a = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3));
+
+	for (Py_ssize_t i = ppCount; i < pCount; i++)
+	{
+		x = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(args, 2 * (i - ppCount) + 0));
+		y = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(args, 2 * (i - ppCount) + 1));
+		self->vertexData[6 * i + 0] = x;
+		self->vertexData[6 * i + 1] = y;
+		self->vertexData[6 * i + 2] = r;
+		self->vertexData[6 * i + 3] = g;
+		self->vertexData[6 * i + 4] = b;
+		self->vertexData[6 * i + 5] = a;
+	}
+
+	self->vertCount += pointsNum;
+}
+
+static PyObject *ShapeBatch_lineStrip(ShapeBatch *self, PyObject *args)
+{
+	if (self->type != GL_LINE_STRIP) {
+		end(self);
+		self->type = GL_LINE_STRIP;
+	}
+	updateData(self, args);
 	Py_RETURN_NONE;
 }
 
 static PyMethodDef ShapeBatch_methods[] = {
 	{ "begin", (PyCFunction)ShapeBatch_begin, METH_NOARGS, 0 },
 	{ "end", (PyCFunction)ShapeBatch_end, METH_NOARGS, 0 },
+	{ "drawLineStrip", ShapeBatch_lineStrip, METH_VARARGS, 0 },
 	{ 0 }
 };
 
