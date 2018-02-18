@@ -26,7 +26,7 @@ shapePointSizeUniform = 2
 */
 
 static const char vertexShaderSource[] =
-"#version 440"
+"#version 440\n"
 
 "layout(location = 0) uniform mat3 vpMatrix;"
 "layout(location = 1) uniform mat3 mMatrix;"
@@ -44,7 +44,7 @@ static const char vertexShaderSource[] =
 "};";
 
 static const char fragmentShaderSource[] =
-"#version 440"
+"#version 440\n"
 
 "in vec4 vertColor;"
 
@@ -83,8 +83,10 @@ void setUpShaders(ShapeBatch *self)
 	glGetShaderiv(self->fragmentShader, GL_COMPILE_STATUS, &isCompiledF);
 	//printf("vertex shader: %d\n", isCompiledV);
 	//printf("fragment shader: %d\n", isCompiledF);
-	printShaderInfoLog(self->vertexShader);
-	printShaderInfoLog(self->fragmentShader);
+	if (!isCompiledV)
+		printShaderInfoLog(self->vertexShader);
+	if (!isCompiledF)
+		printShaderInfoLog(self->fragmentShader);
 
 	self->program = glCreateProgram();
 
@@ -100,7 +102,8 @@ void setUpShaders(ShapeBatch *self)
 		&isLinked
 	);
 	//printf("link status: %d\n", isLinked);
-	printProgramInfoLog(self->program);
+	if (!isLinked)
+		printProgramInfoLog(self->program);
 
 	glEnableVertexAttribArray(0); // vertex position attrib
 	glEnableVertexAttribArray(1); // vertex color attrib
