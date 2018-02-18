@@ -298,8 +298,11 @@ static void updateData(ShapeBatch *self, PyObject *args)
 
 	for (Py_ssize_t i = ppCount; i < pCount; i++)
 	{
-		x = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(args, 2 * (i - ppCount) + 0));
-		y = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(args, 2 * (i - ppCount) + 1));
+		//x = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(args, 2 * (i - ppCount) + 0));
+		//y = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(args, 2 * (i - ppCount) + 1));
+		// TODO: never check?
+		x = PyFloat_AsDouble(PyTuple_GET_ITEM(args, 2 * (i - ppCount) + 0));
+		y = PyFloat_AsDouble(PyTuple_GET_ITEM(args, 2 * (i - ppCount) + 1));
 		self->vertexData[6 * i + 0] = x;
 		self->vertexData[6 * i + 1] = y;
 		self->vertexData[6 * i + 2] = r;
