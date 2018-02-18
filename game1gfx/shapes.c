@@ -440,6 +440,7 @@ static PyMethodDef ShapeBatch_methods[] = {
 
 static PyMemberDef ShapeBatch_members[] = {
 	{ "color", T_OBJECT_EX, offsetof(ShapeBatch, color), 0, 0 },
+	{ "program", T_UINT, offsetof(ShapeBatch, program), READONLY, 0 },
 	{ 0 }
 };
 
