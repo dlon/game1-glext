@@ -385,6 +385,49 @@ static PyObject *ShapeBatch_points(ShapeBatch *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
+static PyObject *ShapeBatch_rectangle(ShapeBatch *self, PyObject *args)
+{
+	// could use strip but it wouldn't be batchable
+	if (self->type != GL_TRIANGLES) {
+		end(self);
+		self->type = GL_TRIANGLES;
+	}
+
+	float x = PyFloat_AsDouble(PyTuple_GET_ITEM(args, 0));
+	float y = PyFloat_AsDouble(PyTuple_GET_ITEM(args, 1));
+	float w = PyFloat_AsDouble(PyTuple_GET_ITEM(args, 2));
+	float h = PyFloat_AsDouble(PyTuple_GET_ITEM(args, 3));
+
+	size_t i = self->vertCount;
+
+	float r = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0));
+	float g = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 1));
+	float b = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 2));
+	float a = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 3));
+
+	self->vertexData[i + 6 * 0 + 0] = x;
+	self->vertexData[i + 6 * 0 + 1] = y;
+	self->vertexData[i + 6 * 1 + 0] = x;
+	self->vertexData[i + 6 * 1 + 1] = y + h;
+	self->vertexData[i + 6 * 2 + 0] = x + w;
+	self->vertexData[i + 6 * 2 + 1] = y;
+	self->vertexData[i + 6 * 3 + 0] = x + w;
+	self->vertexData[i + 6 * 3 + 1] = y;
+	self->vertexData[i + 6 * 4 + 0] = x;
+	self->vertexData[i + 6 * 4 + 1] = y + h;
+	self->vertexData[i + 6 * 5 + 0] = x + w;
+	self->vertexData[i + 6 * 5 + 1] = y + h;
+
+	for (int i = 0; i < 6; i++) {
+		self->vertexData[i + 6 * i + 2] = r;
+		self->vertexData[i + 6 * i + 3] = g;
+		self->vertexData[i + 6 * i + 4] = b;
+		self->vertexData[i + 6 * i + 5] = a;
+	}
+
+	self->vertCount += 6;
+}
+
 static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
 {
 	// TODO: use pure triangles instead of a fan (allows batching)?
@@ -444,6 +487,7 @@ static PyMethodDef ShapeBatch_methods[] = {
 	{ "drawTriangleFan", ShapeBatch_triangleFan, METH_VARARGS, 0 },
 	{ "drawPoints", ShapeBatch_points, METH_VARARGS, 0 },
 	{ "drawCircle", ShapeBatch_circle, METH_VARARGS, 0 },
+	{ "drawRectangle", ShapeBatch_rectangle, METH_VARARGS, 0 },
 	{ 0 }
 };
 
