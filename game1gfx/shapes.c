@@ -157,7 +157,7 @@ static void ShapeBatch_dealloc(ShapeBatch *self)
 
 static int ShapeBatch_init(ShapeBatch *self, PyObject *args, PyObject *kwds)
 {
-	static char *kwlist[] = { "maxVertices" };
+	static char *kwlist[] = { "maxVertices", 0 };
 
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "I", kwlist,
 		&self->maxVertices))
@@ -255,7 +255,7 @@ static PyMemberDef ShapeBatch_members[] = {
 	{ NULL }
 };
 
-static PyTypeObject ShapeBatch_type = {
+PyTypeObject ShapeBatch_type = {
 	PyVarObject_HEAD_INIT(NULL, 0)
 	sizeof(ShapeBatch),             /* tp_basicsize */
 	0,                         /* tp_itemsize */

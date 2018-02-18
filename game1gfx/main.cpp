@@ -6,6 +6,7 @@
 #include "Texture.h"
 #include "TextureRegion.h"
 #include "batch.hpp"
+#include "shapes.h"
 
 struct glrenderer_Batch {
 	PyObject_HEAD
@@ -229,6 +230,8 @@ PyInit_glrenderer(void)
 		return NULL;
 	if (PyType_Ready(&glrenderer_TextureRegionType) < 0)
 		return NULL;
+	if (PyType_Ready(&ShapeBatch_type) < 0)
+		return NULL;
 
 	m = PyModule_Create(&glextModule);
 	if (m == NULL)
@@ -244,6 +247,7 @@ PyInit_glrenderer(void)
 	PyModule_AddObject(m, "Batch", (PyObject *)&glrenderer_BatchType);
 	PyModule_AddObject(m, "Texture", (PyObject *)&glrenderer_TextureType);
 	PyModule_AddObject(m, "TextureRegion", (PyObject *)&glrenderer_TextureRegionType);
+	PyModule_AddObject(m, "ShapeBatch", (PyObject *)&ShapeBatch_type);
 
 	return m;
 }
