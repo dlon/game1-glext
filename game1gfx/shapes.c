@@ -328,6 +328,7 @@ static PyObject *ShapeBatch_lineStrip(ShapeBatch *self, PyObject *args)
 		self->type = GL_LINE_STRIP;
 	}
 	updateData(self, args);
+	end(self);
 	Py_RETURN_NONE;
 }
 
@@ -358,6 +359,7 @@ static PyObject *ShapeBatch_triangleFan(ShapeBatch *self, PyObject *args)
 		self->type = GL_TRIANGLE_FAN;
 	}
 	updateData(self, args);
+	end(self);
 	Py_RETURN_NONE;
 }
 
@@ -368,6 +370,7 @@ static PyObject *ShapeBatch_triangleStrip(ShapeBatch *self, PyObject *args)
 		self->type = GL_TRIANGLE_STRIP;
 	}
 	updateData(self, args);
+	end(self);
 	Py_RETURN_NONE;
 }
 
@@ -384,6 +387,7 @@ static PyObject *ShapeBatch_points(ShapeBatch *self, PyObject *args)
 
 static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
 {
+	// TODO: use pure triangles instead of a fan (allows batching)?
 	if (self->type != GL_TRIANGLE_FAN) {
 		end(self);
 		self->type = GL_TRIANGLE_FAN;
@@ -424,6 +428,8 @@ static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
 	}
 
 	self->vertCount += smoothness;
+
+	end(self);
 
 	Py_RETURN_NONE;
 }
