@@ -291,10 +291,15 @@ static void updateData(ShapeBatch *self, PyObject *args)
 	size_t pCount = self->vertCount + pointsNum;
 	size_t ppCount = self->vertCount;
 
-	float r = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 0));
+	/*float r = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 0));
 	float g = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 1));
 	float b = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 2));
-	float a = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3));
+	float a = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3));*/
+	// TODO: convert using setter (if worthwhile)
+	float r = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0));
+	float g = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 1));
+	float b = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 2));
+	float a = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 3));
 
 	for (Py_ssize_t i = ppCount; i < pCount; i++)
 	{
@@ -393,10 +398,15 @@ static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
 	size_t pCount = self->vertCount + smoothness;
 	size_t ppCount = self->vertCount;
 
-	float r = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 0));
+	/*float r = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 0));
 	float g = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 1));
 	float b = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 2));
-	float a = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3));
+	float a = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3));*/
+	// TODO: convert using setter (if worthwhile)
+	float r = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0));
+	float g = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 1));
+	float b = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 2));
+	float a = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 3));
 
 	for (Py_ssize_t i = ppCount; i < pCount; i++)
 	{
