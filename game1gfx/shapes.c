@@ -12,6 +12,7 @@ typedef struct {
 	GLuint program;
 	GLuint vbo;
 	GLuint vao;
+	float pointSize;
 	unsigned int maxVertices;
 	PyObject *color;
 	int type;
@@ -151,7 +152,7 @@ void setUpShaders(ShapeBatch *self)
 		(GLfloat*)mMatrix
 	);
 
-	//glEnable(GL_PROGRAM_POINT_SIZE); // TODO
+	glEnable(GL_PROGRAM_POINT_SIZE);
 }
 
 static PyObject* ShapeBatch_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -168,6 +169,7 @@ static PyObject* ShapeBatch_new(PyTypeObject *type, PyObject *args, PyObject *kw
 			Py_DECREF(self);
 			return NULL;
 		}
+		self->pointSize = 1.0f;
 	}
 	return self;
 }
@@ -375,6 +377,7 @@ static PyObject *ShapeBatch_points(ShapeBatch *self, PyObject *args)
 		end(self);
 		self->type = GL_POINTS;
 	}
+	glUniform1f(2, self->pointSize);
 	updateData(self, args);
 	Py_RETURN_NONE;
 }
@@ -441,6 +444,7 @@ static PyMethodDef ShapeBatch_methods[] = {
 static PyMemberDef ShapeBatch_members[] = {
 	{ "color", T_OBJECT_EX, offsetof(ShapeBatch, color), 0, 0 },
 	{ "program", T_UINT, offsetof(ShapeBatch, program), READONLY, 0 },
+	{ "pointSize", T_FLOAT, offsetof(ShapeBatch, pointSize), 0, 0 },
 	{ 0 }
 };
 
