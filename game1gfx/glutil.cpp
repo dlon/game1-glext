@@ -48,6 +48,7 @@ void(*glBufferSubData)(GLenum target,
 	GLintptr offset,
 	GLsizeiptr size,
 	const GLvoid * data) = NULL;
+void(*glGenVertexArrays)(GLsizei n, GLuint * buffers) = NULL;
 
 void (*glUniformMatrix3fv)(GLint location,
 	GLsizei count,
@@ -108,6 +109,8 @@ void loadGLFunctions() {
 		GLintptr offset,
 		GLsizeiptr size,
 		const GLvoid * data))wglGetProcAddress("glBufferSubData");
+	glGenVertexArrays = (void(*)(GLsizei n, GLuint * buffers))
+		wglGetProcAddress("glGenVertexArrays");
 	
 	glUniformMatrix3fv = (void(*)(GLint location,
 		GLsizei count,

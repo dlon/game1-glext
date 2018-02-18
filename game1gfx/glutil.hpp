@@ -50,6 +50,7 @@ extern void(*glBufferSubData)(GLenum target,
 	GLintptr offset,
 	GLsizeiptr size,
 	const GLvoid * data);
+extern void(*glGenVertexArrays)(GLsizei n, GLuint * buffers);
 
 extern void(*glUniformMatrix3fv)(GLint location,
 	GLsizei count,
