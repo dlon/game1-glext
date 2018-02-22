@@ -11,20 +11,19 @@ static PyObject* Texture_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static int Texture_init(glrenderer_Texture *self, PyObject *args, PyObject *kwds) {
-	unsigned const char *data = NULL;
-	Py_ssize_t dataLen;
 	unsigned int width;
 	unsigned int height;
+	Py_buffer dataBuffer;
 
 	static char *kwlist[] = { "width", "height", "data", 0 };
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "IIs#", kwlist, &width, &height, &data, &dataLen))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "IIy*", kwlist, &width, &height, &dataBuffer))
 		return -1;
 
 	//self->textureObject->loadData(width, height, data);
-	self->textureObject = new Texture(width, height, data);
+	self->textureObject = new Texture(width, height, (const unsigned char*)dataBuffer.buf);
 
-	// FIXME: memory leaks?
+	PyBuffer_Release(&dataBuffer);
 
 	return 0;
 }
@@ -131,7 +130,7 @@ void Texture::loadData(int width, int height, const unsigned char *data)
 		data
 	);
 
-	glTexParameterf(
+	glTexParameteri(
 		GL_TEXTURE_2D,
 		GL_TEXTURE_MIN_FILTER,
 		GL_NEAREST
