@@ -25,6 +25,8 @@ static int TextureRegion_init(glrenderer_TextureRegion *self, PyObject *args, Py
 		&subX, &subY, &subWidth, &subHeight))
 		return -1;
 
+	Py_INCREF(texture);
+	self->tex = texture;
 	self->_object = new TextureRegion(
 		*texture->textureObject,
 		subX, subY,
@@ -38,6 +40,7 @@ static int TextureRegion_init(glrenderer_TextureRegion *self, PyObject *args, Py
 
 static void TextureRegion_dealloc(glrenderer_TextureRegion* self) {
 	delete self->_object; // FIXME: ref count?
+	Py_DECREF(self->tex);
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 

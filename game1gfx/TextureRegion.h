@@ -46,7 +46,10 @@ public:
 	void getNormalizedTexCoords(float ret[]);
 };
 
+struct glrenderer_Texture;
+
 struct glrenderer_TextureRegion {
 	PyObject_HEAD
 	TextureRegion *_object;
+	glrenderer_Texture* tex;
 };

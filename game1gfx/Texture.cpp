@@ -17,10 +17,9 @@ static int Texture_init(glrenderer_Texture *self, PyObject *args, PyObject *kwds
 
 	static char *kwlist[] = { "width", "height", "data", 0 };
 	
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "IIy*", kwlist, &width, &height, &dataBuffer))
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "IIz*", kwlist, &width, &height, &dataBuffer))
 		return -1;
 
-	//self->textureObject->loadData(width, height, data);
 	self->textureObject = new Texture(width, height, (const unsigned char*)dataBuffer.buf);
 
 	PyBuffer_Release(&dataBuffer);
@@ -29,8 +28,7 @@ static int Texture_init(glrenderer_Texture *self, PyObject *args, PyObject *kwds
 }
 
 static void Texture_dealloc(glrenderer_Texture* self) {
-	//Py_XDECREF(self->first);
-	delete self->textureObject; // FIXME
+	delete self->textureObject;
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
