@@ -18,6 +18,7 @@ typedef struct {
 	int type;
 	int vertCount;
 	GLfloat *vertexData;
+	GLenum blendMode[2];
 } ShapeBatch;
 
 /*
@@ -239,6 +240,9 @@ static int ShapeBatch_init(ShapeBatch *self, PyObject *args, PyObject *kwds)
 	);
 	glBindVertexArray(0);
 
+	self->blendMode[0] = GL_SRC_ALPHA;
+	self->blendMode[1] = GL_ONE_MINUS_SRC_ALPHA;
+
 	return 0;
 }
 
@@ -252,6 +256,9 @@ static void end(ShapeBatch *self)
 {
 	if (!self->type)
 		return;
+
+	glEnable(GL_BLEND);
+	glBlendFunc(self->blendMode[0], self->blendMode[1]);
 
 	glBindVertexArray(self->vao);
 
@@ -478,6 +485,27 @@ static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
 	Py_RETURN_NONE;
 }
 
+static PyObject *
+ShapeBatch_getBlendMode(ShapeBatch *self, void *closure)
+{
+	return Py_BuildValue("(II)", self->blendMode[0], self->blendMode[1]);
+}
+
+static PyObject *
+ShapeBatch_setBlendMode(ShapeBatch *self, PyObject *args, void *closure)
+{
+	GLenum newBlendMode[2];
+	if (!PyArg_ParseTuple(args, "(II)", &newBlendMode[0], &newBlendMode[1]))
+		return -1;
+	if (newBlendMode[0] != self->blendMode[0] || newBlendMode[1] != self->blendMode[1])
+	{
+		end(self);
+		self->blendMode[0] = newBlendMode[0];
+		self->blendMode[1] = newBlendMode[1];
+	}
+	return 0;
+}
+
 static PyMethodDef ShapeBatch_methods[] = {
 	{ "begin", (PyCFunction)ShapeBatch_begin, METH_NOARGS, 0 },
 	{ "end", (PyCFunction)ShapeBatch_end, METH_NOARGS, 0 },
@@ -496,6 +524,11 @@ static PyMemberDef ShapeBatch_members[] = {
 	{ "color", T_OBJECT_EX, offsetof(ShapeBatch, color), 0, 0 },
 	{ "program", T_UINT, offsetof(ShapeBatch, program), READONLY, 0 },
 	{ "pointSize", T_FLOAT, offsetof(ShapeBatch, pointSize), 0, 0 },
+	{ 0 }
+};
+
+static PyGetSetDef ShapeBatch_getset[] = {
+	{ "blendMode", (getter)ShapeBatch_getBlendMode, (setter)ShapeBatch_setBlendMode, 0, 0 },
 	{ 0 }
 };
 
@@ -529,7 +562,7 @@ PyTypeObject ShapeBatch_type = {
 	0,
 	ShapeBatch_methods,
 	ShapeBatch_members,
-	0,
+	ShapeBatch_getset,
 	0,
 	0,
 	0,
