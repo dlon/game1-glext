@@ -358,25 +358,25 @@ TextureRegion::~TextureRegion()
 
 void TextureRegion::computeTransformations()
 {
+	float zx = 0.5f * (tw - width);
+	float zy = 0.5f * (th - height);
 	relativeVertices[0] = 0;
 	relativeVertices[1] = 0;
-	relativeVertices[2] = tw;
+	relativeVertices[2] = width;
 	relativeVertices[3] = 0;
 	relativeVertices[4] = 0;
-	relativeVertices[5] = th;
-	relativeVertices[6] = tw;
-	relativeVertices[7] = th;
+	relativeVertices[5] = height;
+	relativeVertices[6] = width;
+	relativeVertices[7] = height;
 
 	float c = cos(angle);
 	float s = sin(angle);
-	float scaleX = getScaleX();
-	float scaleY = getScaleY();
 
 	for (int i = 0; i < sizeof(relativeVertices) / sizeof(GLfloat); i += 2) {
 		float ox = relativeVertices[i + 0] - origin[0];
 		float oy = relativeVertices[i + 1] - origin[1];
-		relativeVertices[i + 0] = (((ox * c + oy * s)) + origin[0]) * scaleX;
-		relativeVertices[i + 1] = (((oy * c - ox * s)) + origin[1]) * scaleY;
+		relativeVertices[i + 0] = (((ox * c + oy * s)) + origin[0]) + zx;
+		relativeVertices[i + 1] = (((oy * c - ox * s)) + origin[1]) + zy;
 	}
 }
 
