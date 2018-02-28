@@ -33,14 +33,12 @@ static int TextureRegion_init(glrenderer_TextureRegion *self, PyObject *args, Py
 		subWidth, subHeight
 	);
 
-	// FIXME: memory leaks?
-
 	return 0;
 }
 
 static void TextureRegion_dealloc(glrenderer_TextureRegion* self) {
-	delete self->_object; // FIXME: ref count?
-	Py_DECREF(self->tex);
+	delete self->_object;
+	Py_XDECREF(self->tex);
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -358,8 +356,6 @@ TextureRegion::~TextureRegion()
 
 void TextureRegion::computeTransformations()
 {
-	float zx = 0.5f * (tw - width);
-	float zy = 0.5f * (th - height);
 	relativeVertices[0] = 0;
 	relativeVertices[1] = 0;
 	relativeVertices[2] = width;
@@ -375,8 +371,8 @@ void TextureRegion::computeTransformations()
 	for (int i = 0; i < sizeof(relativeVertices) / sizeof(GLfloat); i += 2) {
 		float ox = relativeVertices[i + 0] - origin[0];
 		float oy = relativeVertices[i + 1] - origin[1];
-		relativeVertices[i + 0] = (((ox * c + oy * s)) + origin[0]) + zx;
-		relativeVertices[i + 1] = (((oy * c - ox * s)) + origin[1]) + zy;
+		relativeVertices[i + 0] = (((ox * c + oy * s)) + origin[0]);
+		relativeVertices[i + 1] = (((oy * c - ox * s)) + origin[1]);
 	}
 }
 
