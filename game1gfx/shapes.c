@@ -405,7 +405,7 @@ static PyObject *ShapeBatch_rectangle(ShapeBatch *self, PyObject *args)
 	float w = PyFloat_AsDouble(PyTuple_GET_ITEM(args, 2));
 	float h = PyFloat_AsDouble(PyTuple_GET_ITEM(args, 3));
 
-	size_t i = self->vertCount;
+	size_t i = 6 * self->vertCount;
 
 	float r = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0));
 	float g = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 1));
