@@ -488,14 +488,14 @@ static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
 static PyObject *
 ShapeBatch_getBlendMode(ShapeBatch *self, void *closure)
 {
-	return Py_BuildValue("(II)", self->blendMode[0], self->blendMode[1]);
+	return Py_BuildValue("II", self->blendMode[0], self->blendMode[1]);
 }
 
 static PyObject *
 ShapeBatch_setBlendMode(ShapeBatch *self, PyObject *args, void *closure)
 {
 	GLenum newBlendMode[2];
-	if (!PyArg_ParseTuple(args, "(II)", &newBlendMode[0], &newBlendMode[1]))
+	if (!PyArg_ParseTuple(args, "II", &newBlendMode[0], &newBlendMode[1]))
 		return -1;
 	if (newBlendMode[0] != self->blendMode[0] || newBlendMode[1] != self->blendMode[1])
 	{
