@@ -491,7 +491,7 @@ ShapeBatch_getBlendMode(ShapeBatch *self, void *closure)
 	return Py_BuildValue("II", self->blendMode[0], self->blendMode[1]);
 }
 
-static PyObject *
+static int
 ShapeBatch_setBlendMode(ShapeBatch *self, PyObject *args, void *closure)
 {
 	GLenum newBlendMode[2];
@@ -503,6 +503,68 @@ ShapeBatch_setBlendMode(ShapeBatch *self, PyObject *args, void *closure)
 		self->blendMode[0] = newBlendMode[0];
 		self->blendMode[1] = newBlendMode[1];
 	}
+	return 0;
+}
+
+static PyObject *
+ShapeBatch_getColor255(ShapeBatch *self, void *closure)
+{
+	return Py_BuildValue("ffff",
+		255.0f * PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0)),
+		255.0f * PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 1)),
+		255.0f * PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 2)),
+		255.0f * PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 3)));
+}
+
+static int
+ShapeBatch_setColor255(ShapeBatch *self, PyObject *args, void *closure)
+{
+	float r, g, b, a;
+	if (!PyArg_ParseTuple(args, "ffff",
+		&r, &g, &b, &a))
+		return -1;
+	PyTuple_SetItem(self->color, 0, PyFloat_FromDouble(r / 255.0f));
+	PyTuple_SetItem(self->color, 1, PyFloat_FromDouble(g / 255.0f));
+	PyTuple_SetItem(self->color, 2, PyFloat_FromDouble(b / 255.0f));
+	PyTuple_SetItem(self->color, 3, PyFloat_FromDouble(a / 255.0f));
+	return 0;
+}
+
+static int
+ShapeBatch_set3Color255(ShapeBatch *self, PyObject *args, void *closure)
+{
+	float r, g, b;
+	if (!PyArg_ParseTuple(args, "fff",
+		&r, &g, &b))
+		return -1;
+	PyTuple_SetItem(self->color, 0, PyFloat_FromDouble(r / 255.0f));
+	PyTuple_SetItem(self->color, 1, PyFloat_FromDouble(g / 255.0f));
+	PyTuple_SetItem(self->color, 2, PyFloat_FromDouble(b / 255.0f));
+	return 0;
+}
+
+static PyObject *
+ShapeBatch_getAlpha(ShapeBatch *self, void *closure)
+{
+	//PyObject *obj = PyTuple_GET_ITEM(self->color, 3);
+	PyObject *obj = PyTuple_GetItem(self->color, 3);
+	Py_INCREF(obj);
+	return obj;
+}
+
+static int
+ShapeBatch_setAlpha(ShapeBatch *self, PyObject *args, void *closure)
+{
+	float a;
+	if (!PyArg_Parse(args, "f", &a))
+		return -1;
+	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a));
+	/*PyObject *obj = PyTuple_GET_ITEM(args, 0);
+	//Py_INCREF(obj);
+	//PyTuple_SetItem(self->color, 3, obj);
+	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(PyFloat_AS_DOUBLE(
+		obj
+	)));*/
 	return 0;
 }
 
@@ -529,6 +591,9 @@ static PyMemberDef ShapeBatch_members[] = {
 
 static PyGetSetDef ShapeBatch_getset[] = {
 	{ "blendMode", (getter)ShapeBatch_getBlendMode, (setter)ShapeBatch_setBlendMode, 0, 0 },
+	{ "color255", (getter)ShapeBatch_getColor255, (setter)ShapeBatch_setColor255, 0, 0 },
+	{ "rgb255", 0, (setter)ShapeBatch_set3Color255, 0, 0 },
+	{ "alpha", (getter)ShapeBatch_getAlpha, (setter)ShapeBatch_setAlpha, 0, 0 },
 	{ 0 }
 };
 
