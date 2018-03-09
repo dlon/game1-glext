@@ -52,9 +52,10 @@ static const char fragmentShaderSource[] =
 "#version 440\n"
 
 "in vec4 vertColor;"
+"layout (location = 0) out vec4 colorResult;"
 
 "void main(void) {"
-"	gl_FragColor = vertColor;"
+"	colorResult = vertColor;"
 "}";
 
 void setUpShaders(ShapeBatch *self)

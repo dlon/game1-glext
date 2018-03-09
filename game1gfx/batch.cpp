@@ -31,9 +31,10 @@ const char fragmentShaderSource[] = R"(#version 440
 in vec2 texCoord0;
 in vec4 vertColor;
 layout (location = 1) uniform sampler2D u_texture0;
+layout (location = 0) out vec4 colorResult;
 
 void main(void) {
-    gl_FragColor = vertColor * texture2D(u_texture0, texCoord0);
+    colorResult = vertColor * texture2D(u_texture0, texCoord0);
 })";
 
 
