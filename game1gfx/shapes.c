@@ -530,6 +530,23 @@ ShapeBatch_setColor255(ShapeBatch *self, PyObject *args, void *closure)
 	return 0;
 }
 
+static PyObject *
+ShapeBatch_get3Color255(ShapeBatch *self, void *closure)
+{
+	PyObject *rObj = PyTuple_GetItem(self->color, 0);
+	PyObject *gObj = PyTuple_GetItem(self->color, 1);
+	PyObject *bObj = PyTuple_GetItem(self->color, 2);
+	PyObject *ret = Py_BuildValue("fff",
+		255.0f * PyFloat_AsDouble(rObj),
+		255.0f * PyFloat_AsDouble(gObj),
+		255.0f * PyFloat_AsDouble(bObj)
+	);
+	Py_DECREF(rObj);
+	Py_DECREF(gObj);
+	Py_DECREF(bObj);
+	return ret;
+}
+
 static int
 ShapeBatch_set3Color255(ShapeBatch *self, PyObject *args, void *closure)
 {
@@ -537,9 +554,12 @@ ShapeBatch_set3Color255(ShapeBatch *self, PyObject *args, void *closure)
 	if (!PyArg_ParseTuple(args, "fff",
 		&r, &g, &b))
 		return -1;
-	PyTuple_SetItem(self->color, 0, PyFloat_FromDouble(r / 255.0f));
-	PyTuple_SetItem(self->color, 1, PyFloat_FromDouble(g / 255.0f));
-	PyTuple_SetItem(self->color, 2, PyFloat_FromDouble(b / 255.0f));
+	if (PyTuple_SetItem(self->color, 0, PyFloat_FromDouble(r / 255.0f)) ||
+		PyTuple_SetItem(self->color, 1, PyFloat_FromDouble(g / 255.0f)) ||
+		PyTuple_SetItem(self->color, 2, PyFloat_FromDouble(b / 255.0f)))
+	{
+		return -1;
+	}
 	return 0;
 }
 
@@ -550,6 +570,7 @@ ShapeBatch_getAlpha(ShapeBatch *self, void *closure)
 	PyObject *obj = PyTuple_GetItem(self->color, 3);
 	Py_INCREF(obj);
 	return obj;
+	//return PyFloat_FromDouble(PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3)));
 }
 
 static int
@@ -558,7 +579,8 @@ ShapeBatch_setAlpha(ShapeBatch *self, PyObject *args, void *closure)
 	float a;
 	if (!PyArg_Parse(args, "f", &a))
 		return -1;
-	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a));
+	if (PyTuple_SetItem(self->color, 3, PyFloat_FromDouble(a)))
+		return -1;
 	/*PyObject *obj = PyTuple_GET_ITEM(args, 0);
 	//Py_INCREF(obj);
 	//PyTuple_SetItem(self->color, 3, obj);
@@ -592,7 +614,7 @@ static PyMemberDef ShapeBatch_members[] = {
 static PyGetSetDef ShapeBatch_getset[] = {
 	{ "blendMode", (getter)ShapeBatch_getBlendMode, (setter)ShapeBatch_setBlendMode, 0, 0 },
 	{ "color255", (getter)ShapeBatch_getColor255, (setter)ShapeBatch_setColor255, 0, 0 },
-	{ "rgb255", 0, (setter)ShapeBatch_set3Color255, 0, 0 },
+	{ "rgb255", (getter)ShapeBatch_get3Color255, (setter)ShapeBatch_set3Color255, 0, 0 },
 	{ "alpha", (getter)ShapeBatch_getAlpha, (setter)ShapeBatch_setAlpha, 0, 0 },
 	{ 0 }
 };
