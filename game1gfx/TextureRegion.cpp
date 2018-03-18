@@ -233,6 +233,40 @@ TextureRegion_getSubHeight(glrenderer_TextureRegion *self, void *closure)
 }
 
 static PyObject *
+TextureRegion_getSubX(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyFloat_FromDouble(self->_object->tx);
+}
+
+static int
+TextureRegion_setSubX(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	float tx;
+	if (!PyArg_Parse(args, "f", &tx))
+		return -1;
+	self->_object->tx = tx;
+	return 0;
+}
+
+static PyObject *
+TextureRegion_getSubY(glrenderer_TextureRegion *self, void *closure)
+{
+	// FIXME: ref count
+	return PyFloat_FromDouble(self->_object->ty);
+}
+
+static int
+TextureRegion_setSubY(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	float ty;
+	if (!PyArg_Parse(args, "f", &ty))
+		return -1;
+	self->_object->ty = ty;
+	return 0;
+}
+
+static PyObject *
 TextureRegion_getTexture(glrenderer_TextureRegion *self, void *closure)
 {
 	// !!!FIXME: ref count!
@@ -266,6 +300,8 @@ static PyGetSetDef TextureRegion_getset[] = {
 	{ "color",  (getter)TextureRegion_getColor, (setter)TextureRegion_setColor, 0, 0 },
 	{ "angle",  (getter)TextureRegion_getAngle, (setter)TextureRegion_setAngle, 0, 0 },
 	{ "origin",  (getter)TextureRegion_getOrigin, (setter)TextureRegion_setOrigin, 0, 0 },
+	{ "subX",  (getter)TextureRegion_getSubX, (setter)TextureRegion_setSubX, 0, 0 },
+	{ "subY",  (getter)TextureRegion_getSubY, (setter)TextureRegion_setSubX, 0, 0 },
 	{ "subWidth",  (getter)TextureRegion_getSubWidth, 0, 0, 0 },
 	{ "subHeight",  (getter)TextureRegion_getSubHeight, 0, 0, 0 },
 	{ "scaleX",  (getter)TextureRegion_getScaleX, (setter)TextureRegion_setScaleX, 0, 0 },
@@ -275,6 +311,11 @@ static PyGetSetDef TextureRegion_getset[] = {
 	{ "texture",  (getter)TextureRegion_getTexture, 0, 0, 0 },
 	{ "normalizedCoords", (getter)TextureRegion_getNormalizedTexCoords, 0, 0, 0 },
 	{ NULL }
+};
+
+static PyMemberDef TextureRegion_members[] = {
+	{ "glTexture", T_OBJECT_EX, offsetof(glrenderer_TextureRegion, tex), READONLY, 0 },
+	{ 0 }
 };
 
 static PyObject *
@@ -329,7 +370,7 @@ PyTypeObject glrenderer_TextureRegionType = {
 	0,
 	0,
 	TextureRegion_methods,
-	0, //TextureRegion_members,
+	TextureRegion_members,
 	TextureRegion_getset,
 	0,
 	0,
