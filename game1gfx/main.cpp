@@ -119,6 +119,15 @@ Batch_setBlendMode(glrenderer_Batch *self, PyObject *args, void *closure)
 	return 0;
 }
 
+static PyObject *
+Batch_getObjectIndex(glrenderer_Batch *self, void *closure)
+{
+	return Py_BuildValue(
+		"I",
+		self->_object->getObjectIndex()
+	);
+}
+
 static PyMethodDef Batch_methods[] = {
 	{ "begin", (PyCFunction)Batch_begin, METH_NOARGS, NULL },
 	{ "flush", (PyCFunction)Batch_flush, METH_NOARGS, NULL },
@@ -135,6 +144,7 @@ static PyGetSetDef Batch_getset[] = {
 	{ "maxQuads",  (getter)Batch_getMaxQuads, 0, 0, 0 },
 	{ "program",  (getter)Batch_getProgram, 0, 0, 0 },
 	{ "blendMode",  (getter)Batch_getBlendMode, (setter)Batch_setBlendMode, 0, 0 },
+	{ "objectIndex",  (getter)Batch_getObjectIndex, 0, 0, 0 },
 	{ NULL }
 };
 

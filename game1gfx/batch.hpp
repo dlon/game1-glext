@@ -55,4 +55,5 @@ public:
 
 	size_t getBatchSize() { return maxBatchSize;  }
 	GLuint getProgram() { return program; }
+	int getObjectIndex() { return objectIndex; }
 };
