@@ -19,6 +19,7 @@ typedef struct {
 	int vertCount;
 	GLfloat *vertexData;
 	GLenum blendMode[2];
+	GLfloat mMatrix[3][3];
 } ShapeBatch;
 
 /*
@@ -134,11 +135,15 @@ void setUpShaders(ShapeBatch *self)
 		}
 	}
 
-	GLfloat mMatrix[3][3] = {
-		{ 1, 0, 0 },
-		{ 0, 1, 0 },
-		{ 0, 0, 1 }
-	};
+	self->mMatrix[0][0] = 1;
+	self->mMatrix[0][1] = 0;
+	self->mMatrix[0][2] = 0;
+	self->mMatrix[1][0] = 0;
+	self->mMatrix[1][1] = 1;
+	self->mMatrix[1][2] = 0;
+	self->mMatrix[2][0] = 0;
+	self->mMatrix[2][1] = 0;
+	self->mMatrix[2][2] = 1;
 
 	glUseProgram(self->program);
 	glUniformMatrix3fv(
@@ -151,7 +156,7 @@ void setUpShaders(ShapeBatch *self)
 		1, // m matrix
 		1,
 		GL_FALSE,
-		(GLfloat*)mMatrix
+		(GLfloat*)self->mMatrix
 	);
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
@@ -449,7 +454,7 @@ static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
 	size_t smoothness = 40;
 	if (!PyArg_ParseTuple(args, "fff|I",
 		&x, &y, &radius, &smoothness))
-		return -1;
+		return NULL;
 
 	if (self->vertCount + smoothness > self->maxVertices)
 		end(self);
@@ -591,6 +596,50 @@ ShapeBatch_setAlpha(ShapeBatch *self, PyObject *args, void *closure)
 	return 0;
 }
 
+static PyObject *ShapeBatch_followCamera(ShapeBatch *self, PyObject *args)
+{
+	float parallax;
+	float x, y;
+	if (!PyArg_ParseTuple(args, "fff",
+		&parallax, &x, &y))
+		return NULL;
+
+	self->mMatrix[2][0] = -x * parallax;
+	self->mMatrix[2][1] = -y * parallax;
+
+	glUseProgram(self->program);
+	glUniformMatrix3fv(
+		1, // model uniform
+		1,
+		GL_FALSE,
+		(GLfloat*)self->mMatrix
+	);
+
+	Py_RETURN_NONE;
+}
+
+static PyObject *ShapeBatch_ignoreCamera(ShapeBatch *self, PyObject *args)
+{
+	float x = self->mMatrix[2][0];
+	float y = self->mMatrix[2][1];
+
+	self->mMatrix[2][0] = 0;
+	self->mMatrix[2][1] = 0;
+
+	glUseProgram(self->program);
+	glUniformMatrix3fv(
+		1, // model uniform
+		1,
+		GL_FALSE,
+		(GLfloat*)self->mMatrix
+	);
+
+	self->mMatrix[2][0] = x;
+	self->mMatrix[2][1] = y;
+
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef ShapeBatch_methods[] = {
 	{ "begin", (PyCFunction)ShapeBatch_begin, METH_NOARGS, 0 },
 	{ "end", (PyCFunction)ShapeBatch_end, METH_NOARGS, 0 },
@@ -602,6 +651,8 @@ static PyMethodDef ShapeBatch_methods[] = {
 	{ "drawPoints", ShapeBatch_points, METH_VARARGS, 0 },
 	{ "drawCircle", ShapeBatch_circle, METH_VARARGS, 0 },
 	{ "drawRectangle", ShapeBatch_rectangle, METH_VARARGS, 0 },
+	{ "followCamera", (PyCFunction)ShapeBatch_followCamera, METH_VARARGS, 0 },
+	{ "ignoreCamera", (PyCFunction)ShapeBatch_ignoreCamera, METH_NOARGS, 0 },
 	{ 0 }
 };
 

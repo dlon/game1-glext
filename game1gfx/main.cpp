@@ -128,11 +128,34 @@ Batch_getObjectIndex(glrenderer_Batch *self, void *closure)
 	);
 }
 
+static PyObject *
+Batch_ignoreCamera(glrenderer_Batch *self)
+{
+	self->_object->ignoreCamera();
+	Py_RETURN_NONE;
+}
+
+static PyObject *
+Batch_followCamera(glrenderer_Batch *self, PyObject *args, PyObject *kwds)
+{
+	float parallax;
+	float x, y;
+	if (!PyArg_ParseTuple(args, "fff",
+		&parallax, &x, &y))
+		return NULL;
+
+	self->_object->followCamera(parallax, x, y);
+
+	Py_RETURN_NONE;
+}
+
 static PyMethodDef Batch_methods[] = {
 	{ "begin", (PyCFunction)Batch_begin, METH_NOARGS, NULL },
 	{ "flush", (PyCFunction)Batch_flush, METH_NOARGS, NULL },
 	{ "end", (PyCFunction)Batch_end, METH_NOARGS, NULL },
 	{ "draw", (PyCFunction)Batch_draw, METH_VARARGS | METH_KEYWORDS, NULL },
+	{ "ignoreCamera", (PyCFunction)Batch_ignoreCamera, METH_NOARGS, NULL },
+	{ "followCamera", (PyCFunction)Batch_followCamera, METH_VARARGS, NULL },
 	{ NULL }
 };
 

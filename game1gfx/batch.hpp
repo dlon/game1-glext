@@ -32,6 +32,12 @@ protected:
 	GLenum blendSrc = 0, blendDest = 0;
 	GLenum blendSwitchSrc = 0, blendSwitchDest = 0;
 
+	GLfloat mMatrix[3][3] = {
+		{ 1, 0, 0 },
+		{ 0, 1, 0 },
+		{ 0, 0, 1 }
+	};
+
 public:
 	const static int positionAttribute = 0;
 	const static int texCoordAttribute = 1;
@@ -52,6 +58,9 @@ public:
 	void end();
 
 	void draw(TextureRegion &textureRegion, float x, float y);
+
+	void followCamera(float parallax, float x, float y);
+	void ignoreCamera();
 
 	size_t getBatchSize() { return maxBatchSize;  }
 	GLuint getProgram() { return program; }

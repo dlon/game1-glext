@@ -107,12 +107,6 @@ void Batch::setupShaders() {
 			}
 		}
 	}
-
-	GLfloat mMatrix[3][3] = {
-		{ 1, 0, 0 },
-		{ 0, 1, 0 },
-		{ 0, 0, 1 }
-	};
 	
 	glUseProgram(program);
 	glUniformMatrix3fv(
@@ -166,6 +160,12 @@ Batch::Batch(size_t maxBatchSize) {
 	this->maxBatchSize = maxBatchSize;
 	objectIndex = 0;
 	currentTexture = 0;
+
+	/*mMatrix = {
+		{ 1, 0, 0 },
+		{ 0, 1, 0 },
+		{ 0, 0, 1 }
+	};*/
 
 	setupShaders();
 	createBuffers();
@@ -279,4 +279,38 @@ void Batch::setBlendMode(GLenum src, GLenum dest)
 {
 	blendSwitchSrc = src;
 	blendSwitchDest = dest;
+}
+
+void Batch::followCamera(float parallax, float x, float y)
+{
+	mMatrix[2][0] = -x * parallax;
+	mMatrix[2][1] = -y * parallax;
+
+	glUseProgram(program);
+	glUniformMatrix3fv(
+		mMatrixUniform,
+		1,
+		GL_FALSE,
+		(GLfloat*)mMatrix
+	);
+}
+
+void Batch::ignoreCamera()
+{
+	float x = mMatrix[2][0];
+	float y = mMatrix[2][1];
+
+	mMatrix[2][0] = 0;
+	mMatrix[2][1] = 0;
+
+	glUseProgram(program);
+	glUniformMatrix3fv(
+		mMatrixUniform,
+		1,
+		GL_FALSE,
+		(GLfloat*)mMatrix
+	);
+
+	mMatrix[2][0] = x;
+	mMatrix[2][1] = y;
 }
