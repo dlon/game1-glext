@@ -8,6 +8,11 @@
 #include "batch.hpp"
 #include "shapes.h"
 
+extern "C" float surfaceWidth;
+extern "C" float surfaceHeight;
+float surfaceWidth;
+float surfaceHeight;
+
 struct glrenderer_Batch {
 	PyObject_HEAD
 	Batch* _object;
@@ -23,7 +28,7 @@ static PyObject* Batch_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 			return NULL;
 		}*/
 		// TODO: catch exception and return NULL
-		self->_object = new Batch(1000);
+		self->_object = new Batch(1000, surfaceWidth, surfaceHeight);
 	}
 	return (PyObject*)self;
 }
@@ -213,7 +218,12 @@ static PyTypeObject glrenderer_BatchType = {
 };
 
 static PyObject* glrenderer_init(PyObject *self, PyObject *args) {
+	if (!PyArg_ParseTuple(args, "ff",
+		&surfaceWidth, &surfaceHeight))
+		return NULL;
+
 	loadGLFunctions();
+
 	Py_RETURN_NONE;
 }
 

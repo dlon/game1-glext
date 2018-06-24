@@ -15,6 +15,9 @@ private:
 	void setupShaders();
 	void createBuffers();
 
+	float surfaceWidth;
+	float surfaceHeight;
+
 protected:
 	GLuint program;
 	GLuint vertexShader;
@@ -47,7 +50,7 @@ public:
 	const static int textureUniform = 1;
 	const static int mMatrixUniform = 2;
 
-	Batch(size_t maxBatchSize);
+	Batch(size_t maxBatchSize, float surfaceWidth, float surfaceHeight);
 	virtual ~Batch();
 
 	void setBlendMode(GLenum src, GLenum dest);

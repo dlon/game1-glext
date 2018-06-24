@@ -5,6 +5,9 @@
 
 #define PI 3.14159265
 
+extern float surfaceWidth;
+extern float surfaceHeight;
+
 typedef struct {
 	PyObject_HEAD
 	GLuint vertexShader;
@@ -116,8 +119,8 @@ void setUpShaders(ShapeBatch *self)
 	glEnableVertexAttribArray(1); // vertex color attrib
 
 	GLfloat projectionMatrix[3][3] = {
-		{ 2.0f / 320.0f, 0, 0 },
-		{ 0, -2.0f / 240.0f, 0 },
+		{ 2.0f / surfaceWidth, 0, 0 },
+		{ 0, -2.0f / surfaceHeight, 0 },
 		{ 0, 0, 1 }
 	};
 	GLfloat viewMatrix[3][3] = {

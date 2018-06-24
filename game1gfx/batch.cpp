@@ -89,8 +89,8 @@ void Batch::setupShaders() {
 	glEnableVertexAttribArray(colorAttribute);
 
 	GLfloat projectionMatrix[3][3] = {
-		{ 2.0f/320.0f, 0, 0 },
-		{ 0, -2.0f / 240.0f, 0 },
+		{ 2.0f/surfaceWidth, 0, 0 },
+		{ 0, -2.0f/surfaceHeight, 0 },
 		{ 0, 0, 1 }
 	};
 	GLfloat viewMatrix[3][3] = {
@@ -156,10 +156,13 @@ void Batch::createBuffers() {
 	);
 }
 
-Batch::Batch(size_t maxBatchSize) {
+Batch::Batch(size_t maxBatchSize, float surfaceWidth, float surfaceHeight) {
 	this->maxBatchSize = maxBatchSize;
 	objectIndex = 0;
 	currentTexture = 0;
+
+	this->surfaceWidth = surfaceWidth;
+	this->surfaceHeight = surfaceHeight;
 
 	/*mMatrix = {
 		{ 1, 0, 0 },
