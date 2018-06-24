@@ -139,6 +139,17 @@ void Texture::loadData(int width, int height, const unsigned char *data)
 		GL_NEAREST
 	);
 
+	glTexParameteri(
+		GL_TEXTURE_2D,
+		GL_TEXTURE_WRAP_S,
+		GL_CLAMP_TO_EDGE
+	);
+	glTexParameteri(
+		GL_TEXTURE_2D,
+		GL_TEXTURE_WRAP_T,
+		GL_CLAMP_TO_EDGE
+	);
+
 	this->width = width;
 	this->height = height;
 }
