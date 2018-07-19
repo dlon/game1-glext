@@ -470,10 +470,18 @@ static PyObject *ShapeBatch_circle(ShapeBatch *self, PyObject *args)
 	float b = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 2));
 	float a = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3));*/
 	// TODO: convert using setter (if worthwhile)
-	float r = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0));
+	/*float r = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0));
 	float g = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 1));
 	float b = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 2));
-	float a = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 3));
+	float a = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 3));*/
+	float r = PyFloat_AsDouble(PyTuple_GetItem(self->color, 0));
+	float g = PyFloat_AsDouble(PyTuple_GetItem(self->color, 1));
+	float b = PyFloat_AsDouble(PyTuple_GetItem(self->color, 2));
+	float a = PyFloat_AsDouble(PyTuple_GetItem(self->color, 3));
+
+	if (PyErr_Occurred()) {
+		return NULL;
+	}
 
 	for (Py_ssize_t i = ppCount; i < pCount; i++)
 	{
@@ -532,28 +540,24 @@ ShapeBatch_setColor255(ShapeBatch *self, PyObject *args, void *closure)
 	if (!PyArg_ParseTuple(args, "ffff",
 		&r, &g, &b, &a))
 		return -1;
-	PyTuple_SetItem(self->color, 0, PyFloat_FromDouble(r / 255.0f));
-	PyTuple_SetItem(self->color, 1, PyFloat_FromDouble(g / 255.0f));
-	PyTuple_SetItem(self->color, 2, PyFloat_FromDouble(b / 255.0f));
-	PyTuple_SetItem(self->color, 3, PyFloat_FromDouble(a / 255.0f));
+	PyTuple_SET_ITEM(self->color, 0, PyFloat_FromDouble(r / 255.0f));
+	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g / 255.0f));
+	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b / 255.0f));
+	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a / 255.0f));
 	return 0;
 }
 
 static PyObject *
 ShapeBatch_get3Color255(ShapeBatch *self, void *closure)
 {
-	PyObject *rObj = PyTuple_GetItem(self->color, 0);
-	PyObject *gObj = PyTuple_GetItem(self->color, 1);
-	PyObject *bObj = PyTuple_GetItem(self->color, 2);
-	PyObject *ret = Py_BuildValue("fff",
-		255.0f * PyFloat_AsDouble(rObj),
-		255.0f * PyFloat_AsDouble(gObj),
-		255.0f * PyFloat_AsDouble(bObj)
+	float r = PyFloat_AsDouble(PyTuple_GetItem(self->color, 0));
+	float g = PyFloat_AsDouble(PyTuple_GetItem(self->color, 1));
+	float b = PyFloat_AsDouble(PyTuple_GetItem(self->color, 2));
+	return Py_BuildValue("fff",
+		255.0f * r,
+		255.0f * g,
+		255.0f * b
 	);
-	Py_DECREF(rObj);
-	Py_DECREF(gObj);
-	Py_DECREF(bObj);
-	return ret;
 }
 
 static int
@@ -563,39 +567,28 @@ ShapeBatch_set3Color255(ShapeBatch *self, PyObject *args, void *closure)
 	if (!PyArg_ParseTuple(args, "fff",
 		&r, &g, &b))
 		return -1;
-	if (PyTuple_SetItem(self->color, 0, PyFloat_FromDouble(r / 255.0f)) ||
-		PyTuple_SetItem(self->color, 1, PyFloat_FromDouble(g / 255.0f)) ||
-		PyTuple_SetItem(self->color, 2, PyFloat_FromDouble(b / 255.0f)))
-	{
-		return -1;
-	}
+	PyTuple_SET_ITEM(self->color, 0, PyFloat_FromDouble(r / 255.0f));
+	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g / 255.0f));
+	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b / 255.0f));
 	return 0;
 }
 
 static PyObject *
 ShapeBatch_getAlpha(ShapeBatch *self, void *closure)
 {
-	//PyObject *obj = PyTuple_GET_ITEM(self->color, 3);
 	PyObject *obj = PyTuple_GetItem(self->color, 3);
+	if (!obj) {
+		return NULL;
+	}
 	Py_INCREF(obj);
 	return obj;
-	//return PyFloat_FromDouble(PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3)));
 }
 
 static int
 ShapeBatch_setAlpha(ShapeBatch *self, PyObject *args, void *closure)
 {
-	float a;
-	if (!PyArg_Parse(args, "f", &a))
-		return -1;
-	if (PyTuple_SetItem(self->color, 3, PyFloat_FromDouble(a)))
-		return -1;
-	/*PyObject *obj = PyTuple_GET_ITEM(args, 0);
-	//Py_INCREF(obj);
-	//PyTuple_SetItem(self->color, 3, obj);
-	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(PyFloat_AS_DOUBLE(
-		obj
-	)));*/
+	Py_INCREF(args);
+	PyTuple_SET_ITEM(self->color, 3, args);
 	return 0;
 }
 
