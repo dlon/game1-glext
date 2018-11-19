@@ -255,7 +255,7 @@ static int ShapeBatch_init(ShapeBatch *self, PyObject *args, PyObject *kwds)
 	return 0;
 }
 
-static PyObject *ShapeBatch_begin(ShapeBatch *self, PyObject *args)
+static PyObject *ShapeBatch_begin(ShapeBatch *self)
 {
 	glUseProgram(self->program);
 	Py_RETURN_NONE;
@@ -291,7 +291,7 @@ static void end(ShapeBatch *self)
 	self->type = 0;
 }
 
-static PyObject *ShapeBatch_end(ShapeBatch *self, PyObject *args)
+static PyObject *ShapeBatch_end(ShapeBatch *self)
 {
 	end(self);
 	Py_RETURN_NONE;
@@ -567,9 +567,15 @@ ShapeBatch_set3Color255(ShapeBatch *self, PyObject *args, void *closure)
 	if (!PyArg_ParseTuple(args, "fff",
 		&r, &g, &b))
 		return -1;
+	PyObject *prevR = PyTuple_GET_ITEM(self->color, 0);
+	PyObject *prevG = PyTuple_GET_ITEM(self->color, 1);
+	PyObject *prevB = PyTuple_GET_ITEM(self->color, 2);
 	PyTuple_SET_ITEM(self->color, 0, PyFloat_FromDouble(r / 255.0f));
 	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g / 255.0f));
 	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b / 255.0f));
+	Py_DECREF(prevR);
+	Py_DECREF(prevG);
+	Py_DECREF(prevB);
 	return 0;
 }
 
@@ -599,10 +605,18 @@ ShapeBatch_setColor(ShapeBatch *self, PyObject *args, void *closure)
 	if (!PyArg_ParseTuple(args, "ffff",
 		&r, &g, &b, &a))
 		return -1;
+	PyObject *prevR = PyTuple_GET_ITEM(self->color, 0);
+	PyObject *prevG = PyTuple_GET_ITEM(self->color, 1);
+	PyObject *prevB = PyTuple_GET_ITEM(self->color, 2);
+	PyObject *prevA = PyTuple_GET_ITEM(self->color, 3);
 	PyTuple_SET_ITEM(self->color, 0, PyFloat_FromDouble(r));
 	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g));
 	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b));
 	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a));
+	Py_DECREF(prevR);
+	Py_DECREF(prevG);
+	Py_DECREF(prevB);
+	Py_DECREF(prevA);
 	return 0;
 }
 
