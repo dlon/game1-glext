@@ -5,9 +5,9 @@
 static PyObject* Texture_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 	glrenderer_Texture *self;
 	self = (glrenderer_Texture*)type->tp_alloc(type, 0);
-	if (self != NULL) {
-	}
-	return (PyObject*)self;
+	if (self != NULL)
+		return (PyObject*)self;
+	return NULL;
 }
 
 static int Texture_init(glrenderer_Texture *self, PyObject *args, PyObject *kwds) {

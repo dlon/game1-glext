@@ -77,8 +77,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>C:\Python36\libs;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Python36\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Python37\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Python37\include;$(IncludePath)</IncludePath>
     <TargetExt>.pyd</TargetExt>
     <TargetName>glrenderer</TargetName>
   </PropertyGroup>
@@ -89,8 +89,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <LibraryPath>C:\Python36\libs;$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Python36\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Python37\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Python37\include;$(IncludePath)</IncludePath>
     <TargetExt>.pyd</TargetExt>
     <TargetName>glrenderer</TargetName>
   </PropertyGroup>

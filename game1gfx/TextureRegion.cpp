@@ -6,9 +6,9 @@
 static PyObject* TextureRegion_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 	glrenderer_TextureRegion *self;
 	self = (glrenderer_TextureRegion*)type->tp_alloc(type, 0);
-	if (self != NULL) {
-	}
-	return (PyObject*)self;
+	if (self != NULL)
+		return (PyObject*)self;
+	return NULL;
 }
 
 static int TextureRegion_init(glrenderer_TextureRegion *self, PyObject *args, PyObject *kwds) {

@@ -592,6 +592,27 @@ ShapeBatch_setAlpha(ShapeBatch *self, PyObject *args, void *closure)
 	return 0;
 }
 
+static int
+ShapeBatch_setColor(ShapeBatch *self, PyObject *args, void *closure)
+{
+	float r, g, b, a;
+	if (!PyArg_ParseTuple(args, "ffff",
+		&r, &g, &b, &a))
+		return -1;
+	PyTuple_SET_ITEM(self->color, 0, PyFloat_FromDouble(r));
+	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g));
+	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b));
+	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a));
+	return 0;
+}
+
+static PyObject *
+ShapeBatch_getColor(ShapeBatch *self, void *closure)
+{
+	Py_INCREF(self->color);
+	return self->color;
+}
+
 static PyObject *ShapeBatch_followCamera(ShapeBatch *self, PyObject *args)
 {
 	float parallax;
@@ -653,7 +674,6 @@ static PyMethodDef ShapeBatch_methods[] = {
 };
 
 static PyMemberDef ShapeBatch_members[] = {
-	{ "color", T_OBJECT_EX, offsetof(ShapeBatch, color), 0, 0 },
 	{ "program", T_UINT, offsetof(ShapeBatch, program), READONLY, 0 },
 	{ "pointSize", T_FLOAT, offsetof(ShapeBatch, pointSize), 0, 0 },
 	{ 0 }
@@ -662,6 +682,7 @@ static PyMemberDef ShapeBatch_members[] = {
 static PyGetSetDef ShapeBatch_getset[] = {
 	{ "blendMode", (getter)ShapeBatch_getBlendMode, (setter)ShapeBatch_setBlendMode, 0, 0 },
 	{ "color255", (getter)ShapeBatch_getColor255, (setter)ShapeBatch_setColor255, 0, 0 },
+	{ "color", (getter)ShapeBatch_getColor, (setter)ShapeBatch_setColor, 0, 0 },
 	{ "rgb255", (getter)ShapeBatch_get3Color255, (setter)ShapeBatch_set3Color255, 0, 0 },
 	{ "alpha", (getter)ShapeBatch_getAlpha, (setter)ShapeBatch_setAlpha, 0, 0 },
 	{ 0 }
