@@ -215,6 +215,11 @@ static TextureRegion* prepareEntityRegion(PyObject *entity, PyObject *region)
 	return tr;
 }
 
+static PyObject* DefaultEntityRenderer_getRegion(DefaultEntityRendererObject *self, PyObject *args)
+{
+	return getEntityRegion(self->entity);
+}
+
 static PyObject* DefaultEntityRenderer_drawSelf(DefaultEntityRendererObject *self, PyObject *renderer)
 {
 	if (!PyObject_GetIntAttribute(self->entity, "visible", 1))
@@ -224,7 +229,8 @@ static PyObject* DefaultEntityRenderer_drawSelf(DefaultEntityRendererObject *sel
 	if (getEntityPos(self->entity, &x, &y))
 		return NULL;
 
-	PyObject *regionObj = getEntityRegion(self->entity);
+	//PyObject *regionObj = getEntityRegion(self->entity);
+	PyObject *regionObj = PyObject_CallMethod((PyObject*)self, "_getRegion", NULL);
 	if (!regionObj)
 		return NULL;
 	TextureRegion *tr = prepareEntityRegion(self->entity, regionObj);
@@ -257,20 +263,6 @@ static PyObject* DefaultEntityRenderer_drawSelf(DefaultEntityRendererObject *sel
 	Py_RETURN_NONE;
 }
 
-/*
-def _getOrCreateChildRenderer(self, renderer, c):
-		r = self.rendererMap.get(c)
-		if not r:
-			renderer.batch.end()
-			self.rendererMap[c] = \
-				renderer.createEntityRenderer(
-					c
-				)
-			renderer.batch.begin()
-			r = self.rendererMap[c]
-		return r
-*/
-
 static PyObject *getOrCreateChildRenderer(DefaultEntityRendererObject *self, PyObject *renderer, PyObject *c)
 {
 	PyObject *r = PyDict_GetItem(self->rendererMap, c);
@@ -285,6 +277,14 @@ static PyObject *getOrCreateChildRenderer(DefaultEntityRendererObject *self, PyO
 		batch->begin();
 	}
 	return r;
+}
+
+static PyObject *DefaultEntityRenderer_getOrCreateChildRenderer(DefaultEntityRendererObject *self, PyObject *args)
+{
+	PyObject *renderer, *entity;
+	if (!PyArg_ParseTuple(args, "OO", &renderer, &entity))
+		return NULL;
+	return getOrCreateChildRenderer(self, renderer, entity);
 }
 
 static PyObject* DefaultEntityRenderer_drawChild(DefaultEntityRendererObject *self, PyObject *renderer, PyObject *childObj)
@@ -412,6 +412,8 @@ static PyObject *DefaultEntityRenderer_new(PyTypeObject *subtype, PyObject *args
 
 PyMethodDef DefaultEntityRenderer_methods[] = {
 	{ "draw", (PyCFunction)DefaultEntityRenderer_draw, METH_O, NULL },
+	{ "_getOrCreateChildRenderer", (PyCFunction)DefaultEntityRenderer_getOrCreateChildRenderer, METH_VARARGS, NULL },
+	{ "_getRegion", (PyCFunction)DefaultEntityRenderer_getRegion, METH_VARARGS, NULL },
 	NULL
 };
 
