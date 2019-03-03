@@ -3,6 +3,7 @@
 #include "../TextureRegion.h"
 #include <structmember.h>
 #include <stddef.h>
+#include "../entity.h"
 
 
 int loadSpriteDictionary(PyObject *dict)
@@ -103,34 +104,8 @@ static Batch* getRendererBatch(PyObject *renderer)
 		return NULL;
 	}
 	Batch *batch = ((glrenderer_Batch*)batchObj)->_object;
-	Py_DECREF(batch);
+	Py_DECREF(batchObj);
 	return batch;
-}
-
-static PyObject* getEntityRegion(PyObject *entity)
-{
-	PyObject *sprites = PyObject_GetAttrString(entity, "_sprites");
-	if (PyObject_Not(sprites)) {
-		Py_DECREF(sprites);
-		Py_RETURN_NONE;
-	}
-
-	PyObject *spriteName = PyObject_GetAttrString(entity, "sprite");
-	if (!spriteName) {
-		PyErr_Clear();
-		spriteName = PyUnicode_FromString("default");
-	}
-
-	PyObject *region = PyDict_GetItem(sprites, spriteName);
-	Py_DECREF(spriteName);
-	Py_DECREF(sprites);
-	if (!region) {
-		// TODO: throw GraphicsError
-		PyErr_Format(PyExc_SystemError, "%R has no sprite '%S'.", entity, spriteName);
-		return NULL;
-	}
-
-	return region;
 }
 
 static TextureRegion* prepareEntityRegion(PyObject *entity, PyObject *region)
@@ -206,28 +181,10 @@ static TextureRegion* prepareEntityRegion(PyObject *entity, PyObject *region)
 	return tr;
 }
 
-static int getEntityPos(PyObject *entity, float *x, float *y)
-{
-	PyObject *xObj = PyObject_GetAttrString(entity, "x");
-	if (!xObj)
-		return -1;
-	PyObject *yObj = PyObject_GetAttrString(entity, "y");
-	if (!yObj) {
-		Py_DECREF(xObj);
-		return -1;
-	}
-	*x = PyFloat_AsDouble(xObj);
-	*y = PyFloat_AsDouble(yObj);
-	Py_DECREF(xObj);
-	Py_DECREF(yObj);
-	return 0;
-}
-
 static PyObject* DefaultEntityRenderer_drawSelf(DefaultEntityRendererObject *self, PyObject *renderer)
 {
-	// TODO: "visible"
-	// TODO: parallax
-	// TODO: imageOffset
+	if (!PyObject_GetIntAttribute(self->entity, "visible", 1))
+		Py_RETURN_NONE;
 
 	float x, y;
 	if (getEntityPos(self->entity, &x, &y))
@@ -239,32 +196,31 @@ static PyObject* DefaultEntityRenderer_drawSelf(DefaultEntityRendererObject *sel
 	TextureRegion *tr = prepareEntityRegion(self->entity, regionObj);
 	if (!tr)
 		Py_RETURN_NONE;
-	
+
+	float imageOffset[2];
+	getEntityImageOffset(self->entity, &imageOffset[0], &imageOffset[1]);
+
+	float parallaxX, parallaxY;
+	getEntityParallax(self->entity, &parallaxX, &parallaxY);
 	Batch *batch = getRendererBatch(renderer);
-	batch->draw(*tr, x, y);
+	
+	if (parallaxX != 1.f || parallaxY != 1.f) {
+		PyObject *map = PyObject_BorrowAttributeOrNull(renderer, "map");
+		PyObject *cam = PyObject_BorrowAttributeOrNull(map, "camera");
+		float camX = PyObject_GetFloatAttribute(cam, "x", 0.0f);
+		float camY = PyObject_GetFloatAttribute(cam, "y", 0.0f);
+		
+		batch->draw(
+			*tr,
+			x + imageOffset[0] + camX - parallaxX * camX,
+			y + imageOffset[1] + camY - parallaxY * camY
+		);
+	}
+	else {
+		batch->draw(*tr, x + imageOffset[0], y + imageOffset[1]);
+	}
 
 	Py_RETURN_NONE;
-
-	/*
-		if not getattr(self.entity, 'visible', True):
-			return
-		tr = self._prepareRegion()
-		if tr:
-			offset = getattr(self.entity, 'imageOffset', (0, 0))
-			parallax = getattr(self.entity, 'parallax', (1, 1))
-			if parallax != (1, 1):
-				renderer.batch.draw(
-					tr,
-					self.entity.x + offset[0] +
-						renderer.map.camera.x -
-						parallax[0] * renderer.map.camera.x,
-					self.entity.y + offset[1] +
-						renderer.map.camera.y -
-						parallax[1] * renderer.map.camera.y,
-				)
-			else:
-				// we're only drawing this at the moment
-	*/
 }
 
 static PyObject* DefaultEntityRenderer_draw(DefaultEntityRendererObject *self, PyObject *renderer)
