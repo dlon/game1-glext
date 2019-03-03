@@ -7,16 +7,13 @@
 #include "TextureRegion.h"
 #include "batch.hpp"
 #include "shapes.h"
+#include "entity.h"
+
 
 extern "C" float surfaceWidth;
 extern "C" float surfaceHeight;
 float surfaceWidth;
 float surfaceHeight;
-
-struct glrenderer_Batch {
-	PyObject_HEAD
-	Batch* _object;
-};
 
 static PyObject* Batch_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 	glrenderer_Batch *self;
@@ -279,6 +276,11 @@ PyInit_glrenderer(void)
 	m = PyModule_Create(&glextModule);
 	if (m == NULL)
 		return NULL;
+
+	if (entity_init(m) == -1) {
+		Py_DECREF(m);
+		return NULL;
+	}
 
 	//SpamError = PyErr_NewException("spam.error", NULL, NULL);
 	//Py_INCREF(SpamError);

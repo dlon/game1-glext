@@ -2,6 +2,7 @@
 
 #include "glutil.hpp"
 #include <vector>
+#include <Python.h>
 
 class Texture;
 class TextureRegion;
@@ -68,4 +69,9 @@ public:
 	size_t getBatchSize() { return maxBatchSize;  }
 	GLuint getProgram() { return program; }
 	int getObjectIndex() { return objectIndex; }
+};
+
+struct glrenderer_Batch {
+	PyObject_HEAD
+	Batch* _object;
 };

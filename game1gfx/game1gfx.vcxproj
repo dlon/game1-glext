@@ -153,6 +153,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="batch.cpp" />
+    <ClCompile Include="entity.cpp" />
     <ClCompile Include="entity\DefaultEntityRenderer.cpp" />
     <ClCompile Include="glutil.cpp" />
     <ClCompile Include="main.cpp">
@@ -175,6 +176,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="batch.hpp" />
+    <ClInclude Include="entity.h" />
     <ClInclude Include="entity\DefaultEntityRenderer.h" />
     <ClInclude Include="glutil.hpp" />
     <ClInclude Include="shapes.h" />
