@@ -83,6 +83,47 @@ TextureRegion_setColor(glrenderer_TextureRegion *self, PyObject *args, void *clo
 }
 
 static int
+TextureRegion_setRGB255(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	float r, g, b;
+	if (!PyArg_ParseTuple(args, "fff", &r, &g, &b))
+		return -1;
+
+	self->_object->color[0] = r / 255.0f;
+	self->_object->color[1] = g / 255.0f;
+	self->_object->color[2] = b / 255.0f;
+
+	return 0;
+}
+
+static PyObject *
+TextureRegion_getRGB255(glrenderer_TextureRegion *self, void *closure)
+{
+	return Py_BuildValue(
+		"(fff)",
+		self->_object->color[0] * 255.0f,
+		self->_object->color[1] * 255.0f,
+		self->_object->color[2] * 255.0f
+	);
+}
+
+static int
+TextureRegion_setAlpha(glrenderer_TextureRegion *self, PyObject *args, void *closure)
+{
+	float a;
+	if (!PyArg_Parse(args, "f", &a))
+		return -1;
+	self->_object->color[3] = a;
+	return 0;
+}
+
+static PyObject *
+TextureRegion_getAlpha(glrenderer_TextureRegion *self, void *closure)
+{
+	return PyFloat_FromDouble(self->_object->color[3]);
+}
+
+static int
 TextureRegion_setWidth(glrenderer_TextureRegion *self, PyObject *args, void *closure)
 {
 	float width;
@@ -275,6 +316,8 @@ static PyGetSetDef TextureRegion_getset[] = {
 	{ "width",  (getter)TextureRegion_getWidth, (setter)TextureRegion_setWidth, 0, 0 },
 	{ "height",  (getter)TextureRegion_getHeight, (setter)TextureRegion_setHeight, 0, 0 },
 	{ "color",  (getter)TextureRegion_getColor, (setter)TextureRegion_setColor, 0, 0 },
+	{ "RGB255",  (getter)TextureRegion_getRGB255, (setter)TextureRegion_setRGB255, 0, 0 },
+	{ "alpha",  (getter)TextureRegion_getAlpha, (setter)TextureRegion_setAlpha, 0, 0 },
 	{ "angle",  (getter)TextureRegion_getAngle, (setter)TextureRegion_setAngle, 0, 0 },
 	{ "origin",  (getter)TextureRegion_getOrigin, (setter)TextureRegion_setOrigin, 0, 0 },
 	{ "subX",  (getter)TextureRegion_getSubX, (setter)TextureRegion_setSubX, 0, 0 },
