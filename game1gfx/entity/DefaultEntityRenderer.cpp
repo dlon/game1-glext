@@ -33,6 +33,7 @@ typedef struct {
 	PyObject_HEAD
 	PyObject *entity;
 	PyObject *rendererMap;
+	PyObject *particleRenderers;
 } DefaultEntityRendererObject;
 
 static int DefaultEntityRenderer_init(DefaultEntityRendererObject *self, PyObject *args, PyObject *kwds)
@@ -77,21 +78,54 @@ static int DefaultEntityRenderer_init(DefaultEntityRendererObject *self, PyObjec
 		Py_DECREF(temp);
 	}
 
-	// TODO: particles
-	/*
-		from . import particles
-		self.particleRenderers = {}
-		if hasattr(entity, 'particleTypes'):
-			for var, cls in entity.particleTypes.items():
-				self.particleRenderers[var] =\
-					particles.ParticleGroupRenderer(cls)
-	*/
+	self->particleRenderers = PyDict_New();
+	if (PyObject_HasAttrString(self->entity, "particleTypes")) {
+		/*
+		for var, cls in entity.particleTypes.items():
+			self.particleRenderers[var] =\
+				particles.ParticleGroupRenderer(cls)
+		*/
+		// TODO: do a relative import
+		PyObject *entityMod = PyImport_ImportModule("gfx.entity");
+		if (!entityMod)
+			return -1;
+		PyObject *particlesMod = PyObject_GetAttrString(entityMod, "particles");
+		Py_DECREF(entityMod);
+		if (!particlesMod)
+			return -1;
+		PyObject *ParticleGroupRenderer = PyObject_GetAttrString(particlesMod, "ParticleGroupRenderer");
+		if (!ParticleGroupRenderer) {
+			Py_DECREF(particlesMod);
+			return -1;
+		}
+
+		PyObject *particleTypes = PyObject_GetAttrString(self->entity, "particleTypes");
+		
+		PyObject *var, *cls;
+		Py_ssize_t pos = 0;
+
+		while (PyDict_Next(particleTypes, &pos, &var, &cls)) {
+			PyObject *particleRenderer = PyObject_CallFunctionObjArgs(ParticleGroupRenderer, cls, NULL);
+			if (!particleRenderer ||
+				PyDict_SetItem(self->particleRenderers, var, particleRenderer)) {
+				Py_XDECREF(particleRenderer);
+				Py_DECREF(ParticleGroupRenderer);
+				Py_DECREF(particlesMod);
+				return NULL;
+			}
+			Py_DECREF(particleRenderer);
+		}
+		
+		Py_DECREF(ParticleGroupRenderer);
+		Py_DECREF(particlesMod);
+	}
 
 	return 0;
 }
 
 static void DefaultEntityRenderer_dealloc(DefaultEntityRendererObject *self)
 {
+	Py_XDECREF(self->particleRenderers);
 	Py_XDECREF(self->rendererMap);
 	Py_XDECREF(self->entity);
 	Py_TYPE(self)->tp_free((PyObject *)self);
@@ -223,11 +257,131 @@ static PyObject* DefaultEntityRenderer_drawSelf(DefaultEntityRendererObject *sel
 	Py_RETURN_NONE;
 }
 
+/*
+def _getOrCreateChildRenderer(self, renderer, c):
+		r = self.rendererMap.get(c)
+		if not r:
+			renderer.batch.end()
+			self.rendererMap[c] = \
+				renderer.createEntityRenderer(
+					c
+				)
+			renderer.batch.begin()
+			r = self.rendererMap[c]
+		return r
+*/
+
+static PyObject *getOrCreateChildRenderer(DefaultEntityRendererObject *self, PyObject *renderer, PyObject *c)
+{
+	PyObject *r = PyDict_GetItem(self->rendererMap, c);
+	if (!r) {
+		Batch *batch = getRendererBatch(renderer);
+		batch->end();
+
+		r = PyObject_CallMethod(renderer, "createEntityRenderer", "O", c);
+		PyDict_SetItem(self->rendererMap, c, r);
+		Py_DECREF(r);
+
+		batch->begin();
+	}
+	return r;
+}
+
+static PyObject* DefaultEntityRenderer_drawChild(DefaultEntityRendererObject *self, PyObject *renderer, PyObject *childObj)
+{
+	//PyObject *seq;
+	PyObject *iter = PyObject_GetIter(childObj);
+
+	if (iter == NULL) {
+		PyErr_Clear();
+
+		// call single child renderer
+		PyObject *c = getOrCreateChildRenderer(self, renderer, childObj);
+		if (!c)
+			return NULL;
+		PyObject *result = PyObject_CallMethod(c, "draw", "O", renderer);
+		if (!result)
+			return NULL;
+	}
+	else {
+		// call all child renderers
+		PyObject *item;
+		while (item = PyIter_Next(iter)) {
+			PyObject *result;
+			PyObject *cr = getOrCreateChildRenderer(self, renderer, item);
+			if (!cr ||
+				!(result = PyObject_CallMethod(cr, "draw", "O", renderer))) {
+				Py_DECREF(item);
+				Py_DECREF(iter);
+				return NULL;
+			}
+			Py_DECREF(result);
+		}
+		Py_DECREF(iter);
+		if (PyErr_Occurred()) {
+			return NULL;
+		}
+	}
+
+	Py_RETURN_NONE;
+}
+
 static PyObject* DefaultEntityRenderer_draw(DefaultEntityRendererObject *self, PyObject *renderer)
 {
-	return DefaultEntityRenderer_drawSelf(self, renderer);
+	PyObject *renderOrder = PyObject_GetAttrString(self->entity, "renderOrder");
+	if (!renderOrder) {
+		PyErr_Clear();
+		return DefaultEntityRenderer_drawSelf(self, renderer);
+	}
+	
+	PyObject *seq = PySequence_Fast(renderOrder, "renderOrder attribute must support iteration");
+	if (!seq)
+		return NULL;
 
-	// TODO: renderOrder
+	size_t n = PySequence_Fast_GET_SIZE(seq);
+	for (int i = 0; i < n; i++) {
+		PyObject *rt = PySequence_Fast_GET_ITEM(seq, i);
+		PyObject *particleRenderer;
+
+		if (PyUnicode_CompareWithASCIIString(rt, "self") == 0) {
+			PyObject *result = DefaultEntityRenderer_drawSelf(self, renderer);
+			if (!result)
+				goto LOOPFAIL;
+			Py_DECREF(result);
+		}
+		else if (particleRenderer = PyDict_GetItem(self->particleRenderers, rt)) {
+			PyObject *particles = PyObject_GetAttr(self->entity, rt);
+			if (!particles)
+				goto LOOPFAIL;
+			PyObject *result = PyObject_CallMethod(particleRenderer, "draw", "OO",
+				renderer, particles);
+			Py_DECREF(particles);
+			if (!result)
+				goto LOOPFAIL;
+			Py_DECREF(result);
+		}
+		else {
+			PyObject *crenderer = PyObject_GetAttr(self->entity, rt);
+			if (!crenderer)
+				goto LOOPFAIL;
+			PyObject *result = DefaultEntityRenderer_drawChild(self, renderer, crenderer);
+			if (!result) {
+				Py_DECREF(crenderer);
+				goto LOOPFAIL;
+			}
+			Py_DECREF(result);
+			Py_DECREF(crenderer);
+		}
+	}
+
+	Py_DECREF(seq);
+	Py_RETURN_NONE;
+
+LOOPFAIL:
+
+	Py_DECREF(seq);
+	return NULL;
+
 	/*
 	def draw(self, renderer):
 		if not hasattr(self.entity, 'renderOrder'):
@@ -264,6 +418,7 @@ PyMethodDef DefaultEntityRenderer_methods[] = {
 PyMemberDef DefaultEntityRenderer_members[] = {
 	{ "entity", T_OBJECT, offsetof(DefaultEntityRendererObject, entity), 0, 0 },
 	{ "rendererMap", T_OBJECT, offsetof(DefaultEntityRendererObject, rendererMap), 0, 0 },
+	{ "particleRenderers", T_OBJECT, offsetof(DefaultEntityRendererObject, particleRenderers), 0, 0 },
 	NULL
 };
 
@@ -311,63 +466,11 @@ PyTypeObject DefaultEntityRendererType = {
 /*
 
 class DefaultEntityRenderer:
-	def __init__(self, entity):
-		if hasattr(entity, 'sprites'):
-			type(entity)._sprites = copy.deepcopy(entity.sprites)
-			try:
-				gfx.gl.loadDictionary(entity._sprites)
-			except Exception as e:
-				raise gfx.GraphicsError(
-					'{}: couldn\'t load sprites dict'.format(entity)
-				)
-		else:
-			entity._sprites = {}
-		self.entity = entity
-		self.rendererMap = {}
-
-		if not hasattr(entity, 'x'):
-			entity.x = 0
-		if not hasattr(entity, 'y'):
-			entity.y = 0
-
-		from . import particles
-		self.particleRenderers = {}
-		if hasattr(entity, 'particleTypes'):
-			for var, cls in entity.particleTypes.items():
-				self.particleRenderers[var] =\
-					particles.ParticleGroupRenderer(cls)
-
 	def _prepareRegion(self):
 		return self._prepareGivenRegion(self._getRegion())
 
 	def _prepareSurface(self):
 		return self._prepareGivenRegion(self._getRegion())
-
-	def _getOrCreateChildRenderer(self, renderer, c):
-		r = self.rendererMap.get(c)
-		if not r:
-			renderer.batch.end()
-			self.rendererMap[c] = \
-				renderer.createEntityRenderer(
-					c
-				)
-			renderer.batch.begin()
-			r = self.rendererMap[c]
-		return r
-
-	def drawChild(self, renderer, child):
-		try:
-			self.rendererMap.get(child)
-		except TypeError:
-			children = child
-		else:
-			children = [child]
-		for c in children:
-			r = self._getOrCreateChildRenderer(
-				renderer,
-				c
-			)
-			r.draw(renderer)
 
 	@property
 	def depth(self): return self.entity.depth
