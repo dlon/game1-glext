@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\entity">
+      <UniqueIdentifier>{7fb35e5d-5a6d-48f1-9d6f-96ee63e76e4b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\entity">
+      <UniqueIdentifier>{76e533e0-f947-4c6c-97ee-c500f9cee1c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -33,6 +39,9 @@
     <ClCompile Include="shapes.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="entity\DefaultEntityRenderer.cpp">
+      <Filter>Source Files\entity</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="batch.hpp">
@@ -49,6 +58,9 @@
     </ClInclude>
     <ClInclude Include="shapes.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="entity\DefaultEntityRenderer.h">
+      <Filter>Header Files\entity</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
