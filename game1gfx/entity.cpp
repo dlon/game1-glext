@@ -1,4 +1,5 @@
 #include "entity/DefaultEntityRenderer.h"
+#include "entity/particles.h"
 #include <Python.h>
 
 int entity_init(PyObject *glExtModule)
@@ -7,8 +8,11 @@ int entity_init(PyObject *glExtModule)
 
 	if (PyType_Ready(&DefaultEntityRendererType) < 0)
 		return -1;
+	if (PyType_Ready(&ParticleGroupRendererType) < 0)
+		return -1;
 
-	PyModule_AddObject(glExtModule, "DefaultEntityRenderer", (PyObject *)&DefaultEntityRendererType);
+	PyModule_AddObject(glExtModule, DefaultEntityRendererType.tp_name, (PyObject *)&DefaultEntityRendererType);
+	PyModule_AddObject(glExtModule, ParticleGroupRendererType.tp_name, (PyObject *)&ParticleGroupRendererType);
 
 	return 0;
 }

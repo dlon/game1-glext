@@ -158,6 +158,8 @@
     <ClCompile Include="batch.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="entity\DefaultEntityRenderer.cpp" />
+    <ClCompile Include="entity\particles.cpp" />
+    <ClCompile Include="gfx.cpp" />
     <ClCompile Include="glutil.cpp" />
     <ClCompile Include="main.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
@@ -181,6 +183,8 @@
     <ClInclude Include="batch.hpp" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="entity\DefaultEntityRenderer.h" />
+    <ClInclude Include="entity\particles.h" />
+    <ClInclude Include="gfx.h" />
     <ClInclude Include="glutil.hpp" />
     <ClInclude Include="shapes.h" />
     <ClInclude Include="Texture.h" />

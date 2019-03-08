@@ -4,6 +4,7 @@
 #include <structmember.h>
 #include <stddef.h>
 #include "../entity.h"
+#include "../gfx.h"
 
 
 int loadSpriteDictionary(PyObject *dict)
@@ -129,17 +130,6 @@ static void DefaultEntityRenderer_dealloc(DefaultEntityRendererObject *self)
 	Py_XDECREF(self->rendererMap);
 	Py_XDECREF(self->entity);
 	Py_TYPE(self)->tp_free((PyObject *)self);
-}
-
-static Batch* getRendererBatch(PyObject *renderer)
-{
-	PyObject *batchObj = PyObject_GetAttrString(renderer, "batch");
-	if (!batchObj) {
-		return NULL;
-	}
-	Batch *batch = ((glrenderer_Batch*)batchObj)->_object;
-	Py_DECREF(batchObj);
-	return batch;
 }
 
 static PyObject* prepareEntityRegionObj(PyObject *entity, PyObject *region)
