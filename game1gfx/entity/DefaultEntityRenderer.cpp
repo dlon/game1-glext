@@ -142,11 +142,11 @@ static Batch* getRendererBatch(PyObject *renderer)
 	return batch;
 }
 
-static TextureRegion* prepareEntityRegion(PyObject *entity, PyObject *region)
+static PyObject* prepareEntityRegionObj(PyObject *entity, PyObject *region)
 {
 	PyObject *subRegion = NULL;
 	if (region == Py_None)
-		return NULL;
+		Py_RETURN_NONE;
 
 	if (PySequence_Check(region)) {
 		int frames = PyObject_Length(region);
@@ -161,9 +161,11 @@ static TextureRegion* prepareEntityRegion(PyObject *entity, PyObject *region)
 		subRegion = PySequence_GetItem(region, imageIndex);
 		region = subRegion;
 	}
+	else {
+		Py_INCREF(region);
+	}
 
 	TextureRegion *tr = ((glrenderer_TextureRegion*)region)->_object;
-	Py_XDECREF(subRegion);
 
 	tr->angle = PyObject_GetFloatAttribute(entity, "angle", 0.f);
 	tr->setScaleX(PyObject_GetFloatAttribute(entity, "scaleX", 1.f));
@@ -184,6 +186,7 @@ static TextureRegion* prepareEntityRegion(PyObject *entity, PyObject *region)
 		Py_DECREF(r);
 		Py_DECREF(g);
 		Py_DECREF(b);
+		Py_DECREF(colorObj);
 	}
 	else {
 		PyErr_Clear();
@@ -212,12 +215,41 @@ static TextureRegion* prepareEntityRegion(PyObject *entity, PyObject *region)
 		tr->origin[1] = tr->height / 2.f;
 	}
 
+	return region;
+}
+
+static TextureRegion* prepareEntityRegion(PyObject *entity, PyObject *region)
+{
+	region = prepareEntityRegionObj(entity, region);
+	TextureRegion *tr;
+	if (region != Py_None)
+		tr = ((glrenderer_TextureRegion*)region)->_object;
+	else
+		tr = NULL;
+	Py_DECREF(region);
 	return tr;
+}
+
+static PyObject *DefaultEntityRenderer_prepareGivenRegion(DefaultEntityRendererObject *self, PyObject *region)
+{
+	return prepareEntityRegionObj(self->entity, region);
+}
+
+static PyObject *DefaultEntityRenderer_prepareRegion(DefaultEntityRendererObject *self, PyObject *args)
+{
+	PyObject *regionObj = PyObject_CallMethod((PyObject*)self, "_getRegion", NULL);
+	if (!regionObj)
+		return NULL;
+	PyObject *temp = prepareEntityRegionObj(self->entity, regionObj);
+	Py_DECREF(regionObj);
+	return temp;
 }
 
 static PyObject* DefaultEntityRenderer_getRegion(DefaultEntityRendererObject *self, PyObject *args)
 {
-	return getEntityRegion(self->entity);
+	PyObject *ret = getEntityRegion(self->entity);
+	Py_XINCREF(ret);
+	return ret;
 }
 
 static PyObject* DefaultEntityRenderer_drawSelf(DefaultEntityRendererObject *self, PyObject *renderer)
@@ -229,13 +261,13 @@ static PyObject* DefaultEntityRenderer_drawSelf(DefaultEntityRendererObject *sel
 	if (getEntityPos(self->entity, &x, &y))
 		return NULL;
 
-	//PyObject *regionObj = getEntityRegion(self->entity);
-	PyObject *regionObj = PyObject_CallMethod((PyObject*)self, "_getRegion", NULL);
+	PyObject *regionObj = PyObject_CallMethod((PyObject*)self, "_prepareRegion", NULL);
 	if (!regionObj)
 		return NULL;
-	TextureRegion *tr = prepareEntityRegion(self->entity, regionObj);
-	if (!tr)
-		Py_RETURN_NONE;
+	if (regionObj == Py_None)
+		return regionObj;
+	TextureRegion *tr = ((glrenderer_TextureRegion*)regionObj)->_object;
+	Py_DECREF(regionObj);
 
 	float imageOffset[2];
 	getEntityImageOffset(self->entity, &imageOffset[0], &imageOffset[1]);
@@ -331,7 +363,11 @@ static PyObject* DefaultEntityRenderer_draw(DefaultEntityRendererObject *self, P
 	PyObject *renderOrder = PyObject_GetAttrString(self->entity, "renderOrder");
 	if (!renderOrder) {
 		PyErr_Clear();
-		return DefaultEntityRenderer_drawSelf(self, renderer);
+		//return DefaultEntityRenderer_drawSelf(self, renderer);
+		PyObject *drawSelf = PyObject_GetAttrString((PyObject*)self, "drawSelf");
+		PyObject *ret = PyObject_CallFunctionObjArgs(drawSelf, renderer, NULL);
+		Py_DECREF(drawSelf);
+		return ret;
 	}
 	
 	PyObject *seq = PySequence_Fast(renderOrder, "renderOrder attribute must support iteration");
@@ -344,7 +380,12 @@ static PyObject* DefaultEntityRenderer_draw(DefaultEntityRendererObject *self, P
 		PyObject *particleRenderer;
 
 		if (PyUnicode_CompareWithASCIIString(rt, "self") == 0) {
-			PyObject *result = DefaultEntityRenderer_drawSelf(self, renderer);
+			//PyObject *result = DefaultEntityRenderer_drawSelf(self, renderer);
+			PyObject *drawSelf = PyObject_GetAttrString((PyObject*)self, "drawSelf");
+			if (!drawSelf)
+				goto LOOPFAIL;
+			PyObject *result = PyObject_CallFunctionObjArgs(drawSelf, renderer, NULL);
+			Py_DECREF(drawSelf);
 			if (!result)
 				goto LOOPFAIL;
 			Py_DECREF(result);
@@ -413,7 +454,10 @@ static PyObject *DefaultEntityRenderer_new(PyTypeObject *subtype, PyObject *args
 PyMethodDef DefaultEntityRenderer_methods[] = {
 	{ "draw", (PyCFunction)DefaultEntityRenderer_draw, METH_O, NULL },
 	{ "_getOrCreateChildRenderer", (PyCFunction)DefaultEntityRenderer_getOrCreateChildRenderer, METH_VARARGS, NULL },
-	{ "_getRegion", (PyCFunction)DefaultEntityRenderer_getRegion, METH_VARARGS, NULL },
+	{ "_getRegion", (PyCFunction)DefaultEntityRenderer_getRegion, METH_NOARGS, NULL },
+	{ "_prepareRegion", (PyCFunction)DefaultEntityRenderer_prepareRegion, METH_NOARGS, NULL },
+	{ "_prepareGivenRegion", (PyCFunction)DefaultEntityRenderer_prepareGivenRegion, METH_O, NULL },
+	{ "drawSelf", (PyCFunction)DefaultEntityRenderer_drawSelf, METH_O, NULL },
 	NULL
 };
 
@@ -468,9 +512,6 @@ PyTypeObject DefaultEntityRendererType = {
 /*
 
 class DefaultEntityRenderer:
-	def _prepareRegion(self):
-		return self._prepareGivenRegion(self._getRegion())
-
 	def _prepareSurface(self):
 		return self._prepareGivenRegion(self._getRegion())
 
