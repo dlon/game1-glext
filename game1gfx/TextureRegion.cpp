@@ -27,6 +27,7 @@ static int TextureRegion_init(glrenderer_TextureRegion *self, PyObject *args, Py
 
 	Py_INCREF(texture);
 	self->tex = texture;
+	self->owner = 1;
 	self->_object = new TextureRegion(
 		*texture->textureObject,
 		subX, subY,
@@ -37,7 +38,8 @@ static int TextureRegion_init(glrenderer_TextureRegion *self, PyObject *args, Py
 }
 
 static void TextureRegion_dealloc(glrenderer_TextureRegion* self) {
-	delete self->_object;
+	if (self->owner)
+		delete self->_object;
 	Py_XDECREF(self->tex);
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }

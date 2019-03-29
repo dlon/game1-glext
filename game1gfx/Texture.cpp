@@ -21,6 +21,7 @@ static int Texture_init(glrenderer_Texture *self, PyObject *args, PyObject *kwds
 		return -1;
 
 	self->textureObject = new Texture(width, height, (const unsigned char*)dataBuffer.buf);
+	self->owner = 1;
 
 	PyBuffer_Release(&dataBuffer);
 
@@ -28,7 +29,8 @@ static int Texture_init(glrenderer_Texture *self, PyObject *args, PyObject *kwds
 }
 
 static void Texture_dealloc(glrenderer_Texture* self) {
-	delete self->textureObject;
+	if (self->owner)
+		delete self->textureObject;
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
 

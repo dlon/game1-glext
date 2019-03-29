@@ -1,4 +1,6 @@
 #include "gfx.h"
+#include "Texture.h"
+
 
 TextureRegion* gfx_loadOrGet(PyObject *obj)
 {
@@ -18,8 +20,14 @@ TextureRegion* gfx_loadOrGet(PyObject *obj)
 	if (!PyObject_IsInstance(img, (PyObject*)&glrenderer_TextureRegionType)) {
 		return NULL;
 	}
-	
+
+	// FIXME: handle this
+	// force manual deallocation
+	((glrenderer_TextureRegion*)img)->tex->owner = 0;
+	((glrenderer_TextureRegion*)img)->owner = 0;
+
 	TextureRegion *region = ((glrenderer_TextureRegion*)img)->_object;
+
 	Py_DECREF(img);
 	return region;
 }
