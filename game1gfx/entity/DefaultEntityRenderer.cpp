@@ -457,6 +457,7 @@ PyMethodDef DefaultEntityRenderer_methods[] = {
 	{ "drawChild", (PyCFunction)DefaultEntityRenderer_drawChild, METH_VARARGS, NULL },
 	{ "_getOrCreateChildRenderer", (PyCFunction)DefaultEntityRenderer_getOrCreateChildRenderer, METH_VARARGS, NULL },
 	{ "_getRegion", (PyCFunction)DefaultEntityRenderer_getRegion, METH_NOARGS, NULL },
+	{ "_prepareSurface", (PyCFunction)DefaultEntityRenderer_prepareRegion, METH_NOARGS, NULL },
 	{ "_prepareRegion", (PyCFunction)DefaultEntityRenderer_prepareRegion, METH_NOARGS, NULL },
 	{ "_prepareGivenRegion", (PyCFunction)DefaultEntityRenderer_prepareGivenRegion, METH_O, NULL },
 	{ "drawSelf", (PyCFunction)DefaultEntityRenderer_drawSelf, METH_O, NULL },
