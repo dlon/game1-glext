@@ -303,10 +303,13 @@ static PyObject *getOrCreateChildRenderer(DefaultEntityRendererObject *self, PyO
 
 static PyObject *DefaultEntityRenderer_getOrCreateChildRenderer(DefaultEntityRendererObject *self, PyObject *args)
 {
-	PyObject *renderer, *entity;
+	PyObject *renderer, *entity, *child;
 	if (!PyArg_ParseTuple(args, "OO", &renderer, &entity))
 		return NULL;
-	return getOrCreateChildRenderer(self, renderer, entity);
+	child = getOrCreateChildRenderer(self, renderer, entity);
+	if (child)
+		Py_INCREF(child);
+	return child;
 }
 
 static PyObject* DefaultEntityRenderer_drawChild(DefaultEntityRendererObject *self, PyObject *renderer, PyObject *childObj)
