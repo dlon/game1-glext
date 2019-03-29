@@ -248,7 +248,7 @@ void Batch::flush() {
 
 void Batch::draw(TextureRegion &textureRegion, float x, float y)
 {
-	if (blendSwitchDest != blendSrc || blendSwitchDest != blendDest) {
+	if (blendSwitchSrc != blendSrc || blendSwitchDest != blendDest) {
 		flush();
 		blendSrc = blendSwitchSrc;
 		blendDest = blendSwitchDest;
