@@ -312,7 +312,7 @@ static PyObject *DefaultEntityRenderer_getOrCreateChildRenderer(DefaultEntityRen
 	return child;
 }
 
-static PyObject* DefaultEntityRenderer_drawChild(DefaultEntityRendererObject *self, PyObject *renderer, PyObject *childObj)
+static PyObject* drawChild(DefaultEntityRendererObject *self, PyObject *renderer, PyObject *childObj)
 {
 	//PyObject *seq;
 	PyObject *iter = PyObject_GetIter(childObj);
@@ -349,6 +349,14 @@ static PyObject* DefaultEntityRenderer_drawChild(DefaultEntityRendererObject *se
 	}
 
 	Py_RETURN_NONE;
+}
+
+static PyObject* DefaultEntityRenderer_drawChild(DefaultEntityRendererObject *self, PyObject *args)
+{
+	PyObject *renderer, *childObj;
+	if (!PyArg_ParseTuple(args, "OO", &renderer, &childObj))
+		return NULL;
+	return drawChild(self, renderer, childObj);
 }
 
 static PyObject* DefaultEntityRenderer_draw(DefaultEntityRendererObject *self, PyObject *renderer)
@@ -398,7 +406,7 @@ static PyObject* DefaultEntityRenderer_draw(DefaultEntityRendererObject *self, P
 			PyObject *crenderer = PyObject_GetAttr(self->entity, rt);
 			if (!crenderer)
 				goto LOOPFAIL;
-			PyObject *result = DefaultEntityRenderer_drawChild(self, renderer, crenderer);
+			PyObject *result = drawChild(self, renderer, crenderer);
 			if (!result) {
 				Py_DECREF(crenderer);
 				goto LOOPFAIL;
@@ -446,6 +454,7 @@ static PyObject *DefaultEntityRenderer_new(PyTypeObject *subtype, PyObject *args
 
 PyMethodDef DefaultEntityRenderer_methods[] = {
 	{ "draw", (PyCFunction)DefaultEntityRenderer_draw, METH_O, NULL },
+	{ "drawChild", (PyCFunction)DefaultEntityRenderer_drawChild, METH_VARARGS, NULL },
 	{ "_getOrCreateChildRenderer", (PyCFunction)DefaultEntityRenderer_getOrCreateChildRenderer, METH_VARARGS, NULL },
 	{ "_getRegion", (PyCFunction)DefaultEntityRenderer_getRegion, METH_NOARGS, NULL },
 	{ "_prepareRegion", (PyCFunction)DefaultEntityRenderer_prepareRegion, METH_NOARGS, NULL },
