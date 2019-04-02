@@ -54,9 +54,9 @@ static void updateColor(TextureRegion *region, PyObject *particleOrCls)
 		Py_DECREF(color);
 		color = temp;
 
-		region->color[0] = PyFloat_AsDouble(PySequence_Fast_GET_ITEM(color, 0));
-		region->color[1] = PyFloat_AsDouble(PySequence_Fast_GET_ITEM(color, 1));
-		region->color[2] = PyFloat_AsDouble(PySequence_Fast_GET_ITEM(color, 2));
+		region->color[0] = PyFloat_AsDouble(PySequence_Fast_GET_ITEM(color, 0)) / 255.f;
+		region->color[1] = PyFloat_AsDouble(PySequence_Fast_GET_ITEM(color, 1)) / 255.f;
+		region->color[2] = PyFloat_AsDouble(PySequence_Fast_GET_ITEM(color, 2)) / 255.f;
 
 		Py_DECREF(color);
 	}
@@ -122,8 +122,10 @@ static void drawParticleSprites(ParticleGroupRendererObject *self, PyObject *ren
 			updateColor(region, particle);
 		if (renderOptions & PARTRENDER_DYNAMIC_TRANSFORM)
 			updateTransform(region, particle);
-		if (renderOptions & PARTRENDER_DYNAMIC_MODE)
-			updateMode(self, particle); // TODO: update
+		if (renderOptions & PARTRENDER_DYNAMIC_MODE) {
+			updateMode(self, particle);
+			batch->setBlendMode(self->blendSrc, self->blendDest);
+		}
 
 		float x = PyObject_GetFloatAttribute(particle, "x", 0.f);
 		float y = PyObject_GetFloatAttribute(particle, "y", 0.f);
