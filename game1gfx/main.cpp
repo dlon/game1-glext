@@ -87,14 +87,12 @@ Batch_draw(glrenderer_Batch *self, PyObject *args, PyObject *kwds)
 static PyObject *
 Batch_getMaxQuads(glrenderer_Batch *self, void *closure)
 {
-	// FIXME: ref count
 	return PyLong_FromLong(self->_object->getBatchSize());
 }
 
 static PyObject *
 Batch_getProgram(glrenderer_Batch *self, void *closure)
 {
-	// FIXME: ref count
 	return PyLong_FromSize_t(self->_object->getProgram());
 }
 
@@ -124,10 +122,7 @@ Batch_setBlendMode(glrenderer_Batch *self, PyObject *args, void *closure)
 static PyObject *
 Batch_getObjectIndex(glrenderer_Batch *self, void *closure)
 {
-	return Py_BuildValue(
-		"I",
-		self->_object->getObjectIndex()
-	);
+	return PyLong_FromLong(self->_object->getObjectIndex());
 }
 
 static PyObject *
