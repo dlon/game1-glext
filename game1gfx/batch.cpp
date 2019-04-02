@@ -220,6 +220,8 @@ void Batch::begin() {
 	);
 
 	glUseProgram(program);
+
+	glBlendFunc(blendSrc, blendDest);
 }
 
 void Batch::end() {
