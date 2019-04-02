@@ -573,9 +573,6 @@ ShapeBatch_set3Color255(ShapeBatch *self, PyObject *args, void *closure)
 	PyTuple_SET_ITEM(self->color, 0, PyFloat_FromDouble(r / 255.0f));
 	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g / 255.0f));
 	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b / 255.0f));
-	Py_DECREF(prevR);
-	Py_DECREF(prevG);
-	Py_DECREF(prevB);
 	return 0;
 }
 
@@ -613,10 +610,6 @@ ShapeBatch_setColor(ShapeBatch *self, PyObject *args, void *closure)
 	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g));
 	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b));
 	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a));
-	Py_DECREF(prevR);
-	Py_DECREF(prevG);
-	Py_DECREF(prevB);
-	Py_DECREF(prevA);
 	return 0;
 }
 
