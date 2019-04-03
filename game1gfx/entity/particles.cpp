@@ -140,6 +140,34 @@ static void drawParticleSprites(ParticleGroupRendererObject *self, PyObject *ren
 	batch->setBlendMode(oldBlendMode[0], oldBlendMode[1]);
 }
 
+static float _objToFloat(PyObject *obj)
+{
+	if (obj) {
+		float ret = PyFloat_AsDouble(obj);
+		Py_DECREF(obj);
+		return ret;
+	}
+	return 0.f;
+}
+
+static void _getParticleColor(PyObject *particle, float *r, float *g, float *b)
+{
+	PyObject *colObj = PyObject_GetAttrString(particle, "color");
+	if (!colObj) {
+		// oops
+		PyErr_Clear();
+		*r = 1.f;
+		*g = 1.f;
+		*b = 1.f;
+	}
+	else {
+		*r = _objToFloat(PySequence_GetItem(colObj, 0)) / 255.f;
+		*g = _objToFloat(PySequence_GetItem(colObj, 1)) / 255.f;
+		*b = _objToFloat(PySequence_GetItem(colObj, 2)) / 255.f;
+		Py_DECREF(colObj);
+	}
+}
+
 static void drawParticleCircles(ParticleGroupRendererObject *self, PyObject *renderer, PyObject *particles)
 {
 	Batch *batch = getRendererBatch(renderer);
@@ -148,22 +176,24 @@ static void drawParticleCircles(ParticleGroupRendererObject *self, PyObject *ren
 	batch->end();
 	ShapeBatch_begin(shapes);
 
-	// TODO: use 'color' and 'alpha'
 	// TODO: set blend 'mode'
 	// TODO: smoothness setting. 20 for fire, 40 normally?
 	// TODO: optimization flags
 
 	PyObject *iter = PyObject_GetIter(particles);
 	PyObject *particle;
-	ShapeBatch_setColor(shapes, 1.f, 1.f, 1.f, 1.f);
-
 	size_t smoothness = 40;
 
 	while (particle = PyIter_Next(iter)) {
 		float x = PyObject_GetFloatAttribute(particle, "x", 0.f);
 		float y = PyObject_GetFloatAttribute(particle, "y", 0.f);
 		float size = PyObject_GetFloatAttribute(particle, "size", 1.f);
+		float alpha = PyObject_GetFloatAttribute(particle, "alpha", 1.f);
+
+		float r, g, b;
+		_getParticleColor(particle, &r, &g, &b);
 		
+		ShapeBatch_setColor(shapes, r, g, b, alpha);
 		ShapeBatch_drawCircle(shapes, x, y, size, smoothness);
 
 		Py_DECREF(particle);
