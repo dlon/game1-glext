@@ -252,6 +252,22 @@ void ShapeBatch_setColor(glrenderer_ShapeBatch *self,
 	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a));
 }
 
+void ShapeBatch_setBlendMode(glrenderer_ShapeBatch *self, GLenum src, GLenum dest)
+{
+	if (src != self->blendMode[0] || dest != self->blendMode[1])
+	{
+		ShapeBatch_end(self);
+		self->blendMode[0] = src;
+		self->blendMode[1] = dest;
+	}
+}
+
+void ShapeBatch_getBlendMode(glrenderer_ShapeBatch *self, GLenum ret[2])
+{
+	ret[0] = self->blendMode[0];
+	ret[1] = self->blendMode[1];
+}
+
 /*****
 
 Python interface
@@ -529,15 +545,10 @@ glrenderer_ShapeBatch_getBlendMode(glrenderer_ShapeBatch *self, void *closure)
 static int
 glrenderer_ShapeBatch_setBlendMode(glrenderer_ShapeBatch *self, PyObject *args, void *closure)
 {
-	GLenum newBlendMode[2];
-	if (!PyArg_ParseTuple(args, "II", &newBlendMode[0], &newBlendMode[1]))
+	GLenum src, dest;
+	if (!PyArg_ParseTuple(args, "II", &src, &dest))
 		return -1;
-	if (newBlendMode[0] != self->blendMode[0] || newBlendMode[1] != self->blendMode[1])
-	{
-		ShapeBatch_end(self);
-		self->blendMode[0] = newBlendMode[0];
-		self->blendMode[1] = newBlendMode[1];
-	}
+	ShapeBatch_setBlendMode(self, src, dest);
 	return 0;
 }
 

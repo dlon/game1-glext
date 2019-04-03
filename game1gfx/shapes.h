@@ -37,3 +37,5 @@ void ShapeBatch_drawCircle(
 	size_t smoothness
 );
 void ShapeBatch_setColor(glrenderer_ShapeBatch *self, float r, float g, float b, float a);
+void ShapeBatch_setBlendMode(glrenderer_ShapeBatch *self, GLenum src, GLenum dest);
+void ShapeBatch_getBlendMode(glrenderer_ShapeBatch *self, GLenum ret[2]);
