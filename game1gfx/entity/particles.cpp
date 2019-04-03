@@ -142,28 +142,38 @@ static void drawParticleSprites(ParticleGroupRendererObject *self, PyObject *ren
 
 static void drawParticleCircles(ParticleGroupRendererObject *self, PyObject *renderer, PyObject *particles)
 {
-	// TODO
+	Batch *batch = getRendererBatch(renderer);
+	glrenderer_ShapeBatch *shapes = getShapeBatch(renderer);
 
-	/*
-	def drawCircle(self, renderer, particles):
-		renderer.batch.end()
-		renderer.shapeBatch.begin()
-		sb = renderer.shapeBatch
-		drawCircle = renderer.shapeBatch.drawCircle
-		for particle in particles:
-			#renderer.shapeBatch.color = \
-			#    tuple(c / 255 for c in particle.color) + (particle.alpha,)
-			sb.rgb255 = particle.color
-			sb.alpha = particle.alpha
-			drawCircle(
-				particle.x,
-				particle.y,
-				particle.size,
-				20,
-			)
-		renderer.shapeBatch.end()
-		renderer.batch.begin()
-	*/
+	batch->end();
+	ShapeBatch_begin(shapes);
+
+	// TODO: use 'color' and 'alpha'
+	// TODO: set blend 'mode'
+	// TODO: smoothness setting. 20 for fire, 40 normally?
+	// TODO: optimization flags
+
+	PyObject *iter = PyObject_GetIter(particles);
+	PyObject *particle;
+	ShapeBatch_setColor(shapes, 1.f, 1.f, 1.f, 1.f);
+
+	size_t smoothness = 40;
+
+	while (particle = PyIter_Next(iter)) {
+		float x = PyObject_GetFloatAttribute(particle, "x", 0.f);
+		float y = PyObject_GetFloatAttribute(particle, "y", 0.f);
+		float size = PyObject_GetFloatAttribute(particle, "size", 1.f);
+		
+		ShapeBatch_drawCircle(shapes, x, y, size, smoothness);
+
+		Py_DECREF(particle);
+	}
+
+	Py_DECREF(iter);
+	//if (PyErr_Occurred())
+
+	ShapeBatch_end(shapes);
+	batch->begin();
 }
 
 static int ParticleGroupRenderer_init(ParticleGroupRendererObject *self, PyObject *args, PyObject *kwds)
@@ -220,7 +230,6 @@ static int ParticleGroupRenderer_init(ParticleGroupRendererObject *self, PyObjec
 		PyObject *pType = PyObject_GetAttrString(self->particleClass, "particleType");
 		if (!pType)
 			return -1;
-
 		if (PyUnicode_CompareWithASCIIString(pType, "circle") == 0) {
 			self->draw = drawParticleCircles;
 			Py_DECREF(pType);

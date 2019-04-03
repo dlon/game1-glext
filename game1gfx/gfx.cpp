@@ -42,3 +42,11 @@ Batch* getRendererBatch(PyObject *renderer)
 	Py_DECREF(batchObj);
 	return batch;
 }
+
+glrenderer_ShapeBatch* getShapeBatch(PyObject *renderer)
+{
+	glrenderer_ShapeBatch *batch =
+		(glrenderer_ShapeBatch*)PyObject_GetAttrString(renderer, "shapeBatch");
+	Py_XDECREF((PyObject*)batch);
+	return batch;
+}
