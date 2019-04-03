@@ -36,9 +36,6 @@
     <ClCompile Include="TextureRegion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="shapes.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="entity\DefaultEntityRenderer.cpp">
       <Filter>Source Files\entity</Filter>
     </ClCompile>
@@ -49,6 +46,9 @@
       <Filter>Source Files\entity</Filter>
     </ClCompile>
     <ClCompile Include="gfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="shapes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
