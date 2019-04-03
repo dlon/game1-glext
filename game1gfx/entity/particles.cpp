@@ -178,22 +178,37 @@ static void drawParticleCircles(ParticleGroupRendererObject *self, PyObject *ren
 
 	// TODO: set blend 'mode'
 	// TODO: smoothness setting. 20 for fire, 40 normally?
-	// TODO: optimization flags
 
 	PyObject *iter = PyObject_GetIter(particles);
-	PyObject *particle;
-	size_t smoothness = 40;
+	size_t smoothness = PyObject_GetIntAttribute(self->particleClass, "smoothness", SHAPEBATCH_DEFAULT_SMOOTHNESS);
 
+	float size;
+	if (!(self->renderOptions & PARTRENDER_DYNAMIC_TRANSFORM)) {
+		size = PyObject_GetFloatAttribute(self->particleClass, "size", 1.f);
+	}
+	if (!(self->renderOptions & PARTRENDER_DYNAMIC_COLOR)) {
+		float r, g, b;
+		_getParticleColor(self->particleClass, &r, &g, &b);
+		float alpha = PyObject_GetFloatAttribute(self->particleClass, "alpha", 1.f);
+		ShapeBatch_setColor(shapes, r, g, b, alpha);
+	}
+
+	PyObject *particle;
 	while (particle = PyIter_Next(iter)) {
 		float x = PyObject_GetFloatAttribute(particle, "x", 0.f);
 		float y = PyObject_GetFloatAttribute(particle, "y", 0.f);
-		float size = PyObject_GetFloatAttribute(particle, "size", 1.f);
-		float alpha = PyObject_GetFloatAttribute(particle, "alpha", 1.f);
 
-		float r, g, b;
-		_getParticleColor(particle, &r, &g, &b);
-		
-		ShapeBatch_setColor(shapes, r, g, b, alpha);
+		if ((self->renderOptions & PARTRENDER_DYNAMIC_TRANSFORM)) {
+			size = PyObject_GetFloatAttribute(particle, "size", 1.f);
+		}
+
+		if ((self->renderOptions & PARTRENDER_DYNAMIC_COLOR)) {
+			float r, g, b;
+			_getParticleColor(particle, &r, &g, &b);
+			float alpha = PyObject_GetFloatAttribute(particle, "alpha", 1.f);
+			ShapeBatch_setColor(shapes, r, g, b, alpha);
+		}
+
 		ShapeBatch_drawCircle(shapes, x, y, size, smoothness);
 
 		Py_DECREF(particle);
@@ -216,34 +231,35 @@ static int ParticleGroupRenderer_init(ParticleGroupRendererObject *self, PyObjec
 	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", keywords, &self->particleClass))
 		return -1;
 
+	PyObject *options = PyObject_GetAttrString(self->particleClass, "particleOptions");
+	PyObject *dynamicOpt = options ? PyDict_GetItemString(options, "dynamic") : NULL;
+
+	if (!options || !dynamicOpt) {
+		PyErr_Clear();
+		self->renderOptions = PARTRENDER_DYNAMIC_COLOR |
+			PARTRENDER_DYNAMIC_SPRITE |
+			PARTRENDER_DYNAMIC_TRANSFORM |
+			PARTRENDER_DYNAMIC_MODE;
+	}
+	else {
+		if (PySequence_ContainsStr(dynamicOpt, "size") ||
+			PySequence_ContainsStr(dynamicOpt, "angle") ||
+			PySequence_ContainsStr(dynamicOpt, "origin"))
+			self->renderOptions |= PARTRENDER_DYNAMIC_TRANSFORM;
+		if (PySequence_ContainsStr(dynamicOpt, "color") ||
+			PySequence_ContainsStr(dynamicOpt, "alpha"))
+			self->renderOptions |= PARTRENDER_DYNAMIC_COLOR;
+		if (PySequence_ContainsStr(dynamicOpt, "sprite"))
+			self->renderOptions |= PARTRENDER_DYNAMIC_SPRITE;
+		if (PySequence_ContainsStr(dynamicOpt, "mode"))
+			self->renderOptions |= PARTRENDER_DYNAMIC_MODE;
+	}
+	Py_XDECREF(options);
+
 	if (PyObject_HasAttrString(self->particleClass, "sprite")) {
 		self->draw = drawParticleSprites;
 
-		PyObject *options = PyObject_GetAttrString(self->particleClass, "particleOptions");
-		PyObject *dynamicOpt = options ? PyDict_GetItemString(options, "dynamic") : NULL;
-
-		if (!options || !dynamicOpt) {
-			PyErr_Clear();
-			self->renderOptions = PARTRENDER_DYNAMIC_COLOR |
-				PARTRENDER_DYNAMIC_SPRITE |
-				PARTRENDER_DYNAMIC_TRANSFORM |
-				PARTRENDER_DYNAMIC_MODE;
-		}
-		else {
-			if (PySequence_ContainsStr(dynamicOpt, "size") ||
-				PySequence_ContainsStr(dynamicOpt, "angle") ||
-				PySequence_ContainsStr(dynamicOpt, "origin"))
-				self->renderOptions |= PARTRENDER_DYNAMIC_TRANSFORM;
-			if (PySequence_ContainsStr(dynamicOpt, "color") ||
-				PySequence_ContainsStr(dynamicOpt, "alpha"))
-				self->renderOptions |= PARTRENDER_DYNAMIC_COLOR;
-			if (PySequence_ContainsStr(dynamicOpt, "sprite"))
-				self->renderOptions |= PARTRENDER_DYNAMIC_SPRITE;
-			if (PySequence_ContainsStr(dynamicOpt, "mode"))
-				self->renderOptions |= PARTRENDER_DYNAMIC_MODE;
-		}
-		Py_XDECREF(options);
-
+		// initialize
 		if (!(self->renderOptions & PARTRENDER_DYNAMIC_SPRITE)) {
 			if (!obtainSprite(&self->region, self->particleClass)) {
 				return -1;
