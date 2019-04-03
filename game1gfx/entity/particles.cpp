@@ -172,21 +172,24 @@ static void drawParticleCircles(ParticleGroupRendererObject *self, PyObject *ren
 {
 	Batch *batch = getRendererBatch(renderer);
 	glrenderer_ShapeBatch *shapes = getShapeBatch(renderer);
+	int renderOptions = self->renderOptions;
 
 	batch->end();
-	ShapeBatch_begin(shapes);
 
-	// TODO: set blend 'mode'
-	// TODO: smoothness setting. 20 for fire, 40 normally?
+	GLenum oldBlendMode[2];
+	ShapeBatch_getBlendMode(shapes, oldBlendMode);
+	ShapeBatch_setBlendMode(shapes, self->blendSrc, self->blendDest);
+
+	ShapeBatch_begin(shapes);
 
 	PyObject *iter = PyObject_GetIter(particles);
 	size_t smoothness = PyObject_GetIntAttribute(self->particleClass, "smoothness", SHAPEBATCH_DEFAULT_SMOOTHNESS);
 
 	float size;
-	if (!(self->renderOptions & PARTRENDER_DYNAMIC_TRANSFORM)) {
+	if (!(renderOptions & PARTRENDER_DYNAMIC_TRANSFORM)) {
 		size = PyObject_GetFloatAttribute(self->particleClass, "size", 1.f);
 	}
-	if (!(self->renderOptions & PARTRENDER_DYNAMIC_COLOR)) {
+	if (!(renderOptions & PARTRENDER_DYNAMIC_COLOR)) {
 		float r, g, b;
 		_getParticleColor(self->particleClass, &r, &g, &b);
 		float alpha = PyObject_GetFloatAttribute(self->particleClass, "alpha", 1.f);
@@ -198,15 +201,18 @@ static void drawParticleCircles(ParticleGroupRendererObject *self, PyObject *ren
 		float x = PyObject_GetFloatAttribute(particle, "x", 0.f);
 		float y = PyObject_GetFloatAttribute(particle, "y", 0.f);
 
-		if ((self->renderOptions & PARTRENDER_DYNAMIC_TRANSFORM)) {
+		if ((renderOptions & PARTRENDER_DYNAMIC_TRANSFORM)) {
 			size = PyObject_GetFloatAttribute(particle, "size", 1.f);
 		}
-
-		if ((self->renderOptions & PARTRENDER_DYNAMIC_COLOR)) {
+		if ((renderOptions & PARTRENDER_DYNAMIC_COLOR)) {
 			float r, g, b;
 			_getParticleColor(particle, &r, &g, &b);
 			float alpha = PyObject_GetFloatAttribute(particle, "alpha", 1.f);
 			ShapeBatch_setColor(shapes, r, g, b, alpha);
+		}
+		if (renderOptions & PARTRENDER_DYNAMIC_MODE) {
+			updateMode(self, particle);
+			ShapeBatch_setBlendMode(shapes, self->blendSrc, self->blendDest);
 		}
 
 		ShapeBatch_drawCircle(shapes, x, y, size, smoothness);
@@ -218,6 +224,7 @@ static void drawParticleCircles(ParticleGroupRendererObject *self, PyObject *ren
 	//if (PyErr_Occurred())
 
 	ShapeBatch_end(shapes);
+	ShapeBatch_setBlendMode(shapes, oldBlendMode[0], oldBlendMode[1]);
 	batch->begin();
 }
 
@@ -269,8 +276,6 @@ static int ParticleGroupRenderer_init(ParticleGroupRendererObject *self, PyObjec
 			if (!(self->renderOptions & PARTRENDER_DYNAMIC_TRANSFORM))
 				updateTransform(self->region, self->particleClass);
 		}
-		if (!(self->renderOptions & PARTRENDER_DYNAMIC_MODE))
-			updateMode(self, self->particleClass);
 	}
 	else {
 		PyObject *pType = PyObject_GetAttrString(self->particleClass, "particleType");
@@ -286,6 +291,8 @@ static int ParticleGroupRenderer_init(ParticleGroupRendererObject *self, PyObjec
 			return -1;
 		}
 	}
+	if (!(self->renderOptions & PARTRENDER_DYNAMIC_MODE))
+		updateMode(self, self->particleClass);
 
 	return 0;
 }
