@@ -208,10 +208,10 @@ void ShapeBatch_drawCircle(
 	size_t pCount = self->vertCount + smoothness;
 	size_t ppCount = self->vertCount;
 
-	float r = PyFloat_AsDouble(PyTuple_GetItem(self->color, 0));
-	float g = PyFloat_AsDouble(PyTuple_GetItem(self->color, 1));
-	float b = PyFloat_AsDouble(PyTuple_GetItem(self->color, 2));
-	float a = PyFloat_AsDouble(PyTuple_GetItem(self->color, 3));
+	float r = self->rgba[0];
+	float g = self->rgba[1];
+	float b = self->rgba[2];
+	float a = self->rgba[3];
 
 	if (PyErr_Occurred()) {
 		// FIXME: handle
@@ -246,10 +246,10 @@ void ShapeBatch_drawCircle(
 void ShapeBatch_setColor(glrenderer_ShapeBatch *self,
 	float r, float g, float b, float a)
 {
-	PyTuple_SET_ITEM(self->color, 0, PyFloat_FromDouble(r));
-	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g));
-	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b));
-	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a));
+	self->rgba[0] = r;
+	self->rgba[1] = g;
+	self->rgba[2] = b;
+	self->rgba[3] = a;
 }
 
 void ShapeBatch_setBlendMode(glrenderer_ShapeBatch *self, GLenum src, GLenum dest)
@@ -268,6 +268,84 @@ void ShapeBatch_getBlendMode(glrenderer_ShapeBatch *self, GLenum ret[2])
 	ret[1] = self->blendMode[1];
 }
 
+void ShapeBatch_ignoreCamera(glrenderer_ShapeBatch *self)
+{
+	float x = self->mMatrix[2][0];
+	float y = self->mMatrix[2][1];
+
+	self->mMatrix[2][0] = 0;
+	self->mMatrix[2][1] = 0;
+
+	glUseProgram(self->program);
+	glUniformMatrix3fv(
+		1, // model uniform
+		1,
+		GL_FALSE,
+		(GLfloat*)self->mMatrix
+	);
+
+	self->mMatrix[2][0] = x;
+	self->mMatrix[2][1] = y;
+}
+
+static void vf_updateData_c(glrenderer_ShapeBatch *self, int pointsNum, va_list *varList)
+{
+	float x, y;
+
+	if (self->vertCount + pointsNum > self->maxVertices)
+		ShapeBatch_end(self);
+
+	// TODO: immediate access to floats
+	float r = self->rgba[0];
+	float g = self->rgba[1];
+	float b = self->rgba[2];
+	float a = self->rgba[3];
+
+	size_t finalCoordCount = 6 * (self->vertCount + pointsNum);
+	size_t curCoordCount = 6 * self->vertCount;
+
+	va_list vl;
+	va_copy(vl, *varList);
+
+	for (Py_ssize_t i = curCoordCount; i < finalCoordCount; i += 6)
+	{
+		x = va_arg(vl, double);
+		y = va_arg(vl, double);
+
+		self->vertexData[i + 0] = x;
+		self->vertexData[i + 1] = y;
+		self->vertexData[i + 2] = r;
+		self->vertexData[i + 3] = g;
+		self->vertexData[i + 4] = b;
+		self->vertexData[i + 5] = a;
+	}
+
+	va_end(vl);
+
+	self->vertCount += pointsNum;
+}
+
+static void updateData_c(glrenderer_ShapeBatch *self, int vertCount, ...)
+{
+	va_list vl;
+	va_start(vl, 2 * vertCount);
+	vf_updateData_c(self, vertCount, &vl);
+	va_end(vl);
+}
+
+void ShapeBatch_drawLines(glrenderer_ShapeBatch *self, int numVerts, ...)
+{
+	if (self->type != GL_LINES) {
+		ShapeBatch_end(self);
+		self->type = GL_LINES;
+	}
+
+	va_list vl;
+	va_start(vl, 2 * numVerts);
+	vf_updateData_c(self, numVerts, &vl);
+	va_end(vl);
+}
+
 /*****
 
 Python interface
@@ -278,16 +356,10 @@ static PyObject* glrenderer_ShapeBatch_new(PyTypeObject *type, PyObject *args, P
 {
 	glrenderer_ShapeBatch *self = (glrenderer_ShapeBatch*)type->tp_alloc(type, 0);
 	if (self) {
-		float r, g, b, a;
-		r = 1.0f;
-		g = 1.0f;
-		b = 1.0f;
-		a = 1.0f;
-		self->color = Py_BuildValue("(ffff)", r, g, b, a);
-		if (!self->color) {
-			Py_DECREF(self);
-			return NULL;
-		}
+		self->rgba[0] = 1.0f;
+		self->rgba[1] = 1.0f;
+		self->rgba[2] = 1.0f;
+		self->rgba[3] = 1.0f;
 		self->pointSize = 1.0f;
 	}
 	return (PyObject*)self;
@@ -303,7 +375,6 @@ static void glrenderer_ShapeBatch_dealloc(glrenderer_ShapeBatch *self)
 	glDeleteVertexArrays(1, &self->vao);
 
 	free(self->vertexData);
-	Py_XDECREF(self->color);
 	Py_TYPE(self)->tp_free(self);
 }
 
@@ -388,15 +459,10 @@ static void updateData(glrenderer_ShapeBatch *self, PyObject *args)
 	size_t pCount = self->vertCount + pointsNum;
 	size_t ppCount = self->vertCount;
 
-	/*float r = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 0));
-	float g = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 1));
-	float b = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 2));
-	float a = PyFloat_AS_DOUBLE(PyTuple_GET_ITEM(self->color, 3));*/
-	// TODO: convert using setter (if worthwhile)
-	float r = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0));
-	float g = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 1));
-	float b = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 2));
-	float a = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 3));
+	float r = self->rgba[0];
+	float g = self->rgba[1];
+	float b = self->rgba[2];
+	float a = self->rgba[3];
 
 	for (Py_ssize_t i = ppCount; i < pCount; i++)
 	{
@@ -495,10 +561,10 @@ static PyObject *glrenderer_ShapeBatch_rectangle(glrenderer_ShapeBatch *self, Py
 
 	size_t i = 6 * self->vertCount;
 
-	float r = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0));
-	float g = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 1));
-	float b = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 2));
-	float a = PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 3));
+	float r = self->rgba[0];
+	float g = self->rgba[1];
+	float b = self->rgba[2];
+	float a = self->rgba[3];
 
 	self->vertexData[i + 6 * 0 + 0] = x;
 	self->vertexData[i + 6 * 0 + 1] = y;
@@ -556,10 +622,10 @@ static PyObject *
 glrenderer_ShapeBatch_getColor255(glrenderer_ShapeBatch *self, void *closure)
 {
 	return Py_BuildValue("ffff",
-		255.0f * PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 0)),
-		255.0f * PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 1)),
-		255.0f * PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 2)),
-		255.0f * PyFloat_AsDouble(PyTuple_GET_ITEM(self->color, 3)));
+		255.0f * self->rgba[0],
+		255.0f * self->rgba[1],
+		255.0f * self->rgba[2],
+		255.0f * self->rgba[3]);
 }
 
 static int
@@ -569,24 +635,22 @@ glrenderer_ShapeBatch_setColor255(glrenderer_ShapeBatch *self, PyObject *args, v
 	if (!PyArg_ParseTuple(args, "ffff",
 		&r, &g, &b, &a))
 		return -1;
-	PyTuple_SET_ITEM(self->color, 0, PyFloat_FromDouble(r / 255.0f));
-	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g / 255.0f));
-	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b / 255.0f));
-	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a / 255.0f));
+	
+	self->rgba[0] = r / 255.0f;
+	self->rgba[1] = g / 255.0f;
+	self->rgba[2] = b / 255.0f;
+	self->rgba[3] = a / 255.0f;
+	
 	return 0;
 }
 
 static PyObject *
 glrenderer_ShapeBatch_get3Color255(glrenderer_ShapeBatch *self, void *closure)
 {
-	float r = PyFloat_AsDouble(PyTuple_GetItem(self->color, 0));
-	float g = PyFloat_AsDouble(PyTuple_GetItem(self->color, 1));
-	float b = PyFloat_AsDouble(PyTuple_GetItem(self->color, 2));
 	return Py_BuildValue("fff",
-		255.0f * r,
-		255.0f * g,
-		255.0f * b
-	);
+		255.0f * self->rgba[0],
+		255.0f * self->rgba[1],
+		255.0f * self->rgba[2]);
 }
 
 static int
@@ -596,28 +660,24 @@ glrenderer_ShapeBatch_set3Color255(glrenderer_ShapeBatch *self, PyObject *args, 
 	if (!PyArg_ParseTuple(args, "fff",
 		&r, &g, &b))
 		return -1;
-	PyTuple_SetItem(self->color, 0, PyFloat_FromDouble(r / 255.0f));
-	PyTuple_SetItem(self->color, 1, PyFloat_FromDouble(g / 255.0f));
-	PyTuple_SetItem(self->color, 2, PyFloat_FromDouble(b / 255.0f));
+	
+	self->rgba[0] = r / 255.0f;
+	self->rgba[1] = g / 255.0f;
+	self->rgba[2] = b / 255.0f;
+
 	return 0;
 }
 
 static PyObject *
 glrenderer_ShapeBatch_getAlpha(glrenderer_ShapeBatch *self, void *closure)
 {
-	PyObject *obj = PyTuple_GetItem(self->color, 3);
-	if (!obj) {
-		return NULL;
-	}
-	Py_INCREF(obj);
-	return obj;
+	return PyFloat_FromDouble(self->rgba[3]);
 }
 
 static int
 glrenderer_ShapeBatch_setAlpha(glrenderer_ShapeBatch *self, PyObject *args, void *closure)
 {
-	Py_INCREF(args);
-	PyTuple_SET_ITEM(self->color, 3, args);
+	self->rgba[3] = PyFloat_AsDouble(args);
 	return 0;
 }
 
@@ -628,18 +688,23 @@ glrenderer_ShapeBatch_setColor(glrenderer_ShapeBatch *self, PyObject *args, void
 	if (!PyArg_ParseTuple(args, "ffff",
 		&r, &g, &b, &a))
 		return -1;
-	PyTuple_SET_ITEM(self->color, 0, PyFloat_FromDouble(r));
-	PyTuple_SET_ITEM(self->color, 1, PyFloat_FromDouble(g));
-	PyTuple_SET_ITEM(self->color, 2, PyFloat_FromDouble(b));
-	PyTuple_SET_ITEM(self->color, 3, PyFloat_FromDouble(a));
+	
+	self->rgba[0] = r;
+	self->rgba[1] = g;
+	self->rgba[2] = b;
+	self->rgba[3] = a;
+
 	return 0;
 }
 
 static PyObject *
 glrenderer_ShapeBatch_getColor(glrenderer_ShapeBatch *self, void *closure)
 {
-	Py_INCREF(self->color);
-	return self->color;
+	return Py_BuildValue("ffff",
+		self->rgba[0],
+		self->rgba[1],
+		self->rgba[2],
+		self->rgba[3]);
 }
 
 static PyObject *glrenderer_ShapeBatch_followCamera(glrenderer_ShapeBatch *self, PyObject *args)
@@ -666,23 +731,7 @@ static PyObject *glrenderer_ShapeBatch_followCamera(glrenderer_ShapeBatch *self,
 
 static PyObject *glrenderer_ShapeBatch_ignoreCamera(glrenderer_ShapeBatch *self, PyObject *args)
 {
-	float x = self->mMatrix[2][0];
-	float y = self->mMatrix[2][1];
-
-	self->mMatrix[2][0] = 0;
-	self->mMatrix[2][1] = 0;
-
-	glUseProgram(self->program);
-	glUniformMatrix3fv(
-		1, // model uniform
-		1,
-		GL_FALSE,
-		(GLfloat*)self->mMatrix
-	);
-
-	self->mMatrix[2][0] = x;
-	self->mMatrix[2][1] = y;
-
+	ShapeBatch_ignoreCamera(self);
 	Py_RETURN_NONE;
 }
 

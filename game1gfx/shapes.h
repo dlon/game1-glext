@@ -9,7 +9,7 @@ typedef struct {
 	GLuint vao;
 	float pointSize;
 	unsigned int maxVertices;
-	PyObject *color;
+	float rgba[4];
 	int type;
 	int vertCount;
 	GLfloat *vertexData;
@@ -25,6 +25,7 @@ extern "C" {
 
 void ShapeBatch_begin(glrenderer_ShapeBatch *self);
 void ShapeBatch_end(glrenderer_ShapeBatch *self);
+
 void ShapeBatch_drawCircle(
 	glrenderer_ShapeBatch *self,
 	float x, float y,
@@ -36,6 +37,11 @@ void ShapeBatch_drawCircle(
 	float radius,
 	size_t smoothness
 );
+
+void ShapeBatch_drawLines(glrenderer_ShapeBatch *self, int numVerts, ...);
+
 void ShapeBatch_setColor(glrenderer_ShapeBatch *self, float r, float g, float b, float a);
 void ShapeBatch_setBlendMode(glrenderer_ShapeBatch *self, GLenum src, GLenum dest);
 void ShapeBatch_getBlendMode(glrenderer_ShapeBatch *self, GLenum ret[2]);
+
+void ShapeBatch_ignoreCamera(glrenderer_ShapeBatch *self);

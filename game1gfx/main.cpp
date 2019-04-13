@@ -277,10 +277,6 @@ PyInit_glrenderer(void)
 		return NULL;
 	}
 
-	//SpamError = PyErr_NewException("spam.error", NULL, NULL);
-	//Py_INCREF(SpamError);
-	//PyModule_AddObject(m, "error", SpamError);
-
 	//loadGLFunctions(); // TODO: fix using fake WGL context
 
 	//glrenderer_BatchType.tp_new = PyType_GenericNew;
