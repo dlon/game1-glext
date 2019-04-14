@@ -210,29 +210,35 @@ void ShapeBatch_drawCircle(
 	if (self->vertCount + smoothness > self->maxVertices)
 		ShapeBatch_end(self);
 
-	size_t pCount = self->vertCount + smoothness;
-	size_t ppCount = self->vertCount;
-
 	float r = self->rgba[0];
 	float g = self->rgba[1];
 	float b = self->rgba[2];
 	float a = self->rgba[3];
 
-	if (PyErr_Occurred()) {
-		// FIXME: handle
-		return;
-	}
+	float k = 2.0f * PI / smoothness;
+	float c = cosf(k);
+	float s = sqrtf(1.f - c * c);
+	if (smoothness == 3)
+		s = -s;
 
-	for (Py_ssize_t i = ppCount; i < pCount; i++)
-	{
-		self->vertexData[6 * i + 0] =
-			x + radius * cos((float)(i - ppCount) / smoothness * 2.0f * PI);
-		self->vertexData[6 * i + 1] =
-			y + radius * sin((float)(i - ppCount) / smoothness * 2.0f * PI);
-		self->vertexData[6 * i + 2] = r;
-		self->vertexData[6 * i + 3] = g;
-		self->vertexData[6 * i + 4] = b;
-		self->vertexData[6 * i + 5] = a;
+	float prevX;
+	float relX = radius;
+	float relY = .0f;
+
+	size_t pCount = 6 * self->vertCount + 6 * smoothness;
+	size_t ppCount = 6 * self->vertCount;
+
+	for (size_t i = ppCount; i < pCount; i += 6) {
+		self->vertexData[i + 0] = x + relX;
+		self->vertexData[i + 1] = y + relY;
+		self->vertexData[i + 2] = r;
+		self->vertexData[i + 3] = g;
+		self->vertexData[i + 4] = b;
+		self->vertexData[i + 5] = a;
+
+		prevX = relX;
+		relX = relX * c - relY * s;
+		relY = relY * c + prevX * s;
 	}
 
 	self->vertCount += smoothness;
