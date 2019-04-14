@@ -78,6 +78,83 @@ static void renderLineParticles(
 	glEnable(GL_BLEND);
 }
 
+static void renderCircleParticles(
+	glrenderer_ShapeBatch *shapes,
+	Batch *batch,
+	ParticleSystem * ps
+) {
+	ParticleArray& particles = ps->getParticles();
+	int cPerParticle = particles.getComponentsPerParticle();
+	int components = particles.getNumComponents();
+
+	const ParticleVertex* points = ps->getDefinition().appearance.points;
+	float offsetX = points[0].x;
+	float offsetY = points[0].y;
+
+	ShapeBatch_begin(shapes);
+
+	ShapeBatch_ignoreCamera(shapes);
+
+	const Color &initialColor = ps->getDefinition().initialColor.min;
+	ShapeBatch_setColor(shapes, initialColor.r, initialColor.g, initialColor.b, initialColor.a);
+
+	if (!particles.hasColor()) {
+		if (initialColor.a == 1.f) {
+			ShapeBatch_disableBlending(shapes);
+		}
+		else {
+			ShapeBatch_enableBlending(shapes);
+		}
+	}
+
+	float radius = ps->getDefinition().initialSize.min;
+	float smoothness = ps->getDefinition().appearance.circleSmoothness;
+
+	for (int i = 0; i < components; i += cPerParticle) {
+		if (particles.get(i + 0) < .0f) // longevity
+			continue;
+
+		float x = particles.get(i + 1);
+		float y = particles.get(i + 2);
+
+		if (particles.hasColor()) {
+			int relativeComponent = 3;
+			if (particles.hasVelocity()) {
+				relativeComponent += ParticleArray::VELOCITY_NUM_COMPONENTS;
+			}
+
+			if (particles.hasAlpha()) {
+				ShapeBatch_setColor(
+					shapes,
+					particles.get(i + relativeComponent + 0),
+					particles.get(i + relativeComponent + 1),
+					particles.get(i + relativeComponent + 2),
+					particles.get(i + relativeComponent + 3)
+				);
+			}
+			else {
+				ShapeBatch_setColor(
+					shapes,
+					particles.get(i + relativeComponent + 0),
+					particles.get(i + relativeComponent + 1),
+					particles.get(i + relativeComponent + 2),
+					initialColor.a
+				);
+			}
+		}
+
+		ShapeBatch_drawCircle(
+			shapes,
+			x, y,
+			radius,
+			smoothness
+		);
+	}
+
+	ShapeBatch_end(shapes);
+	ShapeBatch_enableBlending(shapes);
+	glEnable(GL_BLEND);
+}
 
 void ParticleSystemRenderer::render(
 	glrenderer_ShapeBatch *shapes,
@@ -88,11 +165,14 @@ void ParticleSystemRenderer::render(
 	case ParticleAppearance::Line:
 		renderLineParticles(shapes, batch, ps);
 		break;
+
+	case ParticleAppearance::Circle:
+		renderCircleParticles(shapes, batch, ps);
+		break;
 	}
 
-	// TODO: circle
 	// TODO: sprite
-	// TODO: circles, sprite: use points[0] as offset
+	// TODO: sprite: use points[0] as offset
 }
 
 void ParticleSystemRenderer::render(glrenderer_ShapeBatch * shapes, Batch * batch, const ParticleSystemCollection& collection)
