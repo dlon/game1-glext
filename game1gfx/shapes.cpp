@@ -201,13 +201,12 @@ void ShapeBatch_drawCircle(
 	float radius,
 	size_t smoothness
 ) {
-	// TODO: use pure triangles instead of a fan (allows batching)?
-	if (self->type != GL_TRIANGLE_FAN) {
+	if (self->type != GL_TRIANGLES) {
 		ShapeBatch_end(self);
-		self->type = GL_TRIANGLE_FAN;
+		self->type = GL_TRIANGLES;
 	}
 
-	if (self->vertCount + smoothness > self->maxVertices)
+	if (self->vertCount + 3 * smoothness > self->maxVertices)
 		ShapeBatch_end(self);
 
 	float r = self->rgba[0];
@@ -225,25 +224,37 @@ void ShapeBatch_drawCircle(
 	float relX = radius;
 	float relY = .0f;
 
-	size_t pCount = 6 * self->vertCount + 6 * smoothness;
 	size_t ppCount = 6 * self->vertCount;
+	size_t pCount = ppCount + 3 * 6 * smoothness;
 
-	for (size_t i = ppCount; i < pCount; i += 6) {
-		self->vertexData[i + 0] = x + relX;
-		self->vertexData[i + 1] = y + relY;
+	for (size_t i = ppCount; i < pCount; i += 18) {
+		self->vertexData[i + 0] = x;
+		self->vertexData[i + 1] = y;
 		self->vertexData[i + 2] = r;
 		self->vertexData[i + 3] = g;
 		self->vertexData[i + 4] = b;
 		self->vertexData[i + 5] = a;
 
+		self->vertexData[i + 6] = x + relX;
+		self->vertexData[i + 7] = y + relY;
+		self->vertexData[i + 8] = r;
+		self->vertexData[i + 9] = g;
+		self->vertexData[i + 10] = b;
+		self->vertexData[i + 11] = a;
+
 		prevX = relX;
 		relX = relX * c - relY * s;
 		relY = relY * c + prevX * s;
+
+		self->vertexData[i + 12] = x + relX;
+		self->vertexData[i + 13] = y + relY;
+		self->vertexData[i + 14] = r;
+		self->vertexData[i + 15] = g;
+		self->vertexData[i + 16] = b;
+		self->vertexData[i + 17] = a;
 	}
 
-	self->vertCount += smoothness;
-
-	ShapeBatch_end(self);
+	self->vertCount += 3 * smoothness;
 }
 
 void ShapeBatch_drawCircle(
