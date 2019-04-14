@@ -51,6 +51,9 @@
     <ClCompile Include="shapes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ParticleSystemRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="batch.hpp">
@@ -78,6 +81,9 @@
       <Filter>Header Files\entity</Filter>
     </ClInclude>
     <ClInclude Include="gfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystemRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

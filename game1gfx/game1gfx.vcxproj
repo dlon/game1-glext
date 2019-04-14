@@ -175,6 +175,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="ParticleSystemRenderer.cpp" />
     <ClCompile Include="shapes.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureRegion.cpp" />
@@ -186,6 +187,7 @@
     <ClInclude Include="entity\particles.h" />
     <ClInclude Include="gfx.h" />
     <ClInclude Include="glutil.hpp" />
+    <ClInclude Include="ParticleSystemRenderer.h" />
     <ClInclude Include="shapes.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureRegion.h" />

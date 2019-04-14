@@ -1,5 +1,11 @@
 #pragma once
 
+#include <Python.h>
+#include <gl/GL.h>
+#include <gl/GLU.h>
+#include "glutil.hpp"
+
+
 typedef struct {
 	PyObject_HEAD
 	GLuint vertexShader;

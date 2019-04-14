@@ -239,11 +239,38 @@ static PyObject* glrenderer_init(PyObject *self, PyObject *args) {
 
 // method table and initialization function
 
+
+#include "ParticleSystemCollection.h"
+#include "ParticleSystemRenderer.h"
+#include "gfx.h"
+#include "shapes.h"
+
+static ParticleSystemRenderer *particleRenderer = nullptr;
+static ParticleSystemCollection *particleSystemCollection = nullptr;
+
+PyObject * glrenderer_drawParticles(PyObject *self, PyObject *renderer)
+{
+	glrenderer_ShapeBatch *shapes = getShapeBatch(renderer);
+	Batch *batch = getRendererBatch(renderer);
+
+	particleRenderer->render(shapes, batch, *particleSystemCollection);
+
+	Py_RETURN_NONE;
+}
+
+
 static PyMethodDef methods[] = {
 	{ "init", glrenderer_init, METH_VARARGS },
+	{ "drawParticles", glrenderer_drawParticles, METH_O },
 	0
 };
-// keyword arguments: use METH_KEYWORDS
+
+static void glrenderer_free(void *ptr) {
+	if (particleRenderer) {
+		delete particleRenderer;
+		particleRenderer = nullptr;
+	}
+}
 
 static struct PyModuleDef glextModule = {
 	PyModuleDef_HEAD_INIT,
@@ -251,7 +278,11 @@ static struct PyModuleDef glextModule = {
 	NULL, /* module documentation, may be NULL */
 	-1,       /* size of per-interpreter state of the module,
 			  or -1 if the module keeps state in global variables. */
-	methods
+	methods,
+	NULL, // m_slots
+	NULL, // m_traverse (during gc traversal)
+	NULL, // m_clear (gc clearing)
+	glrenderer_free
 };
 
 PyMODINIT_FUNC
@@ -279,11 +310,32 @@ PyInit_glrenderer(void)
 
 	//loadGLFunctions(); // TODO: fix using fake WGL context
 
-	//glrenderer_BatchType.tp_new = PyType_GenericNew;
+	Py_INCREF((PyObject *)&glrenderer_BatchType);
+	Py_INCREF((PyObject *)&glrenderer_TextureType);
+	Py_INCREF((PyObject *)&glrenderer_TextureRegionType);
+	Py_INCREF((PyObject *)&ShapeBatch_type);
+
 	PyModule_AddObject(m, "Batch", (PyObject *)&glrenderer_BatchType);
 	PyModule_AddObject(m, "Texture", (PyObject *)&glrenderer_TextureType);
 	PyModule_AddObject(m, "TextureRegion", (PyObject *)&glrenderer_TextureRegionType);
 	PyModule_AddObject(m, "ShapeBatch", (PyObject *)&ShapeBatch_type);
+
+	PyObject *coreMod = PyImport_ImportModule("core");
+	PyObject *particlesMod = PyObject_GetAttrString(coreMod, "particles");
+	Py_DECREF(coreMod);
+	PyObject *psysCollectionObj = PyObject_GetAttrString(particlesMod, "_collection");
+	Py_DECREF(particlesMod);
+	if (!psysCollectionObj) {
+		return NULL;
+	}
+	particleSystemCollection =
+		(ParticleSystemCollection*)PyCapsule_GetPointer(psysCollectionObj, NULL);
+	Py_DECREF(psysCollectionObj);
+	if (!particleSystemCollection) {
+		return NULL;
+	}
+
+	particleRenderer = new ParticleSystemRenderer;
 
 	return m;
 }
