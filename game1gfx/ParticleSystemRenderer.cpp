@@ -19,7 +19,18 @@ static void renderLineParticles(
 	ShapeBatch_begin(shapes);
 
 	ShapeBatch_ignoreCamera(shapes);
-	ShapeBatch_setColor(shapes, 1.f, 1.f, 1.f, 1);
+
+	const Color &initialColor = ps->getDefinition().initialColor.min;
+	ShapeBatch_setColor(shapes, initialColor.r, initialColor.g, initialColor.b, initialColor.a);
+
+	if (!particles.hasColor()) {
+		if (initialColor.a == 1.f) {
+			ShapeBatch_disableBlending(shapes);
+		}
+		else {
+			ShapeBatch_enableBlending(shapes);
+		}
+	}
 
 	for (int i = 0; i < components; i += cPerParticle) {
 		if (particles.get(i + 0) < .0f) // longevity
@@ -28,28 +39,43 @@ static void renderLineParticles(
 		float x = particles.get(i + 1);
 		float y = particles.get(i + 2);
 
-		// TODO: handle extra properties
+		if (particles.hasColor()) {
+			int relativeComponent = 3;
+			if (particles.hasVelocity()) {
+				relativeComponent += ParticleArray::VELOCITY_NUM_COMPONENTS;
+			}
 
-		/*ShapeBatch_setColor(
-			shapes,
-			particles.get(i + 5),
-			particles.get(i + 6),
-			particles.get(i + 7),
-			particles.get(i + 8)
-		);
-		ShapeBatch_drawCircle(shapes, x, y, 5.f * particles.get(i + 9), 3);*/
+			if (particles.hasAlpha()) {
+				ShapeBatch_setColor(
+					shapes,
+					particles.get(i + relativeComponent + 0),
+					particles.get(i + relativeComponent + 1),
+					particles.get(i + relativeComponent + 2),
+					particles.get(i + relativeComponent + 3)
+				);
+			}
+			else {
+				ShapeBatch_setColor(
+					shapes,
+					particles.get(i + relativeComponent + 0),
+					particles.get(i + relativeComponent + 1),
+					particles.get(i + relativeComponent + 2),
+					initialColor.a
+				);
+			}
+		}
 
 		ShapeBatch_drawLines(
 			shapes,
 			2,
-			//x + 5.f * 0.342f,
-			//y - 5.f * 0.93969f,
 			x + point0x, y + point0y,
 			x + point1x, y + point1y
 		);
 	}
 
 	ShapeBatch_end(shapes);
+	ShapeBatch_enableBlending(shapes);
+	glEnable(GL_BLEND);
 }
 
 

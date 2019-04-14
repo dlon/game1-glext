@@ -165,8 +165,13 @@ void ShapeBatch_end(glrenderer_ShapeBatch *self)
 	if (!self->type)
 		return;
 
-	glEnable(GL_BLEND);
-	glBlendFunc(self->blendMode[0], self->blendMode[1]);
+	if (self->blendEnabled) {
+		glEnable(GL_BLEND);
+		glBlendFunc(self->blendMode[0], self->blendMode[1]);
+	}
+	else {
+		glDisable(GL_BLEND);
+	}
 
 	glBindVertexArray(self->vao);
 
@@ -250,6 +255,13 @@ void ShapeBatch_setColor(glrenderer_ShapeBatch *self,
 	self->rgba[1] = g;
 	self->rgba[2] = b;
 	self->rgba[3] = a;
+}
+
+void ShapeBatch_enableBlending(glrenderer_ShapeBatch *self) {
+	self->blendEnabled = 1;
+}
+void ShapeBatch_disableBlending(glrenderer_ShapeBatch *self) {
+	self->blendEnabled = 0;
 }
 
 void ShapeBatch_setBlendMode(glrenderer_ShapeBatch *self, GLenum src, GLenum dest)
@@ -431,6 +443,7 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 
 	self->blendMode[0] = GL_SRC_ALPHA;
 	self->blendMode[1] = GL_ONE_MINUS_SRC_ALPHA;
+	self->blendEnabled = 1;
 
 	return 0;
 }
