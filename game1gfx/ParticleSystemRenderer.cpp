@@ -18,8 +18,6 @@ static void renderLineParticles(
 
 	ShapeBatch_begin(shapes);
 
-	ShapeBatch_ignoreCamera(shapes);
-
 	const Color &initialColor = ps->getDefinition().initialColor.min;
 	ShapeBatch_setColor(shapes, initialColor.r, initialColor.g, initialColor.b, initialColor.a);
 
@@ -93,8 +91,6 @@ static void renderCircleParticles(
 
 	ShapeBatch_begin(shapes);
 
-	ShapeBatch_ignoreCamera(shapes);
-
 	const Color &initialColor = ps->getDefinition().initialColor.min;
 	ShapeBatch_setColor(shapes, initialColor.r, initialColor.g, initialColor.b, initialColor.a);
 
@@ -117,8 +113,8 @@ static void renderCircleParticles(
 		float x = particles.get(i + 1);
 		float y = particles.get(i + 2);
 
+		int relativeComponent = 3;
 		if (particles.hasColor()) {
-			int relativeComponent = 3;
 			if (particles.hasVelocity()) {
 				relativeComponent += ParticleArray::VELOCITY_NUM_COMPONENTS;
 			}
@@ -131,6 +127,8 @@ static void renderCircleParticles(
 					particles.get(i + relativeComponent + 2),
 					particles.get(i + relativeComponent + 3)
 				);
+				relativeComponent += ParticleArray::COLOR_NUM_COMPONENTS +
+					ParticleArray::ALPHA_NUM_COMPONENTS;
 			}
 			else {
 				ShapeBatch_setColor(
@@ -140,7 +138,11 @@ static void renderCircleParticles(
 					particles.get(i + relativeComponent + 2),
 					initialColor.a
 				);
+				relativeComponent += ParticleArray::COLOR_NUM_COMPONENTS;
 			}
+		}
+		if (particles.hasSize()) {
+			radius = particles.get(i + relativeComponent);
 		}
 
 		ShapeBatch_drawCircle(
