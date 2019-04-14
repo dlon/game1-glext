@@ -4,13 +4,13 @@
 #include <gl/GL.h>
 #include <gl/GLU.h>
 #include "glutil.hpp"
+#include "GLProgram.h"
 
 
 typedef struct {
 	PyObject_HEAD
-	GLuint vertexShader;
-	GLuint fragmentShader;
-	GLuint program;
+	GLProgram *program;
+	GLuint programGL;
 	GLuint vbo;
 	GLuint vao;
 	float pointSize;

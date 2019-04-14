@@ -84,6 +84,9 @@ extern "C" {
 	extern void printShaderInfoLog(GLuint shader);
 	extern void printProgramInfoLog(GLuint program);
 
+	extern const char* getShaderInfoLog(GLuint shader);
+	extern const char* getProgramInfoLog(GLuint program);
+
 #ifdef __cplusplus
 }
 #endif

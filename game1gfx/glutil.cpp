@@ -76,6 +76,28 @@ void(*glUniform4f)(GLint location,
 
 static char infoBuffer[1000];
 
+const char* getProgramInfoLog(GLuint program)
+{
+	glGetProgramInfoLog(
+		program,
+		sizeof(infoBuffer),
+		0,
+		infoBuffer
+	);
+	return infoBuffer;
+}
+
+const char* getShaderInfoLog(GLuint shader)
+{
+	glGetShaderInfoLog(
+		shader,
+		sizeof(infoBuffer),
+		0,
+		infoBuffer
+	);
+	return infoBuffer;
+}
+
 void printProgramInfoLog(GLuint program)
 {
 	glGetProgramInfoLog(

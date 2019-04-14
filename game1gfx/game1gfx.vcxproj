@@ -160,8 +160,9 @@
     <ClCompile Include="entity\DefaultEntityRenderer.cpp" />
     <ClCompile Include="entity\particles.cpp" />
     <ClCompile Include="gfx.cpp" />
+    <ClCompile Include="GLProgram.cpp" />
     <ClCompile Include="glutil.cpp" />
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="glrenderer.cpp">
       <CompileAsManaged Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</CompileAsManaged>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </PrecompiledHeader>
@@ -186,6 +187,8 @@
     <ClInclude Include="entity\DefaultEntityRenderer.h" />
     <ClInclude Include="entity\particles.h" />
     <ClInclude Include="gfx.h" />
+    <ClInclude Include="GLProgram.h" />
+    <ClInclude Include="glrenderer.h" />
     <ClInclude Include="glutil.hpp" />
     <ClInclude Include="ParticleSystemRenderer.h" />
     <ClInclude Include="shapes.h" />

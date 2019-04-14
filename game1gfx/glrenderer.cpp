@@ -8,6 +8,7 @@
 #include "batch.hpp"
 #include "shapes.h"
 #include "entity.h"
+#include "glrenderer.h"
 
 
 extern "C" float surfaceWidth;
@@ -311,6 +312,8 @@ static struct PyModuleDef glextModule = {
 	glrenderer_free
 };
 
+PyObject * glrenderer_GraphicsError = nullptr;
+
 PyMODINIT_FUNC
 PyInit_glrenderer(void)
 {
@@ -324,6 +327,10 @@ PyInit_glrenderer(void)
 		return NULL;
 	if (PyType_Ready(&ShapeBatch_type) < 0)
 		return NULL;
+
+	glrenderer_GraphicsError = PyErr_NewException(
+		"glrenderer.GraphicsError",
+		PyExc_RuntimeError, NULL);
 
 	m = PyModule_Create(&glextModule);
 	if (m == NULL)

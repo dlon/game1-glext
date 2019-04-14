@@ -3,6 +3,9 @@
 #include "glutil.hpp"
 #include <math.h>
 #include "shapes.h"
+#include "gfx.h"
+#include "glrenderer.h"
+
 
 #define PI 3.14159265f
 
@@ -46,58 +49,19 @@ static const char fragmentShaderSource[] =
 "	colorResult = vertColor;"
 "}";
 
-void setUpShaders(glrenderer_ShapeBatch *self)
+
+bool setUpShaders(glrenderer_ShapeBatch *self)
 {
-	// FIXME: add error handling/checking (compilation, linking (etc.?))
-	const char* vshaders[] = { vertexShaderSource };
-	const char* fshaders[] = { fragmentShaderSource };
+	self->program = new GLProgram(vertexShaderSource, fragmentShaderSource, nullptr);
+	if (!self->program->OK()) {
+		PyErr_SetString(glrenderer_GraphicsError, self->program->getErrorMessage());
 
-	self->vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(
-		self->vertexShader,
-		1,
-		vshaders,
-		NULL
-	);
-	glCompileShader(self->vertexShader);
+		delete self->program;
+		self->program = nullptr;
 
-	self->fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(
-		self->fragmentShader,
-		1,
-		fshaders,
-		NULL
-	);
-	glCompileShader(self->fragmentShader);
-
-	// TODO: error handling
-	GLint isCompiledV = 0;
-	GLint isCompiledF = 0;
-	glGetShaderiv(self->vertexShader, GL_COMPILE_STATUS, &isCompiledV);
-	glGetShaderiv(self->fragmentShader, GL_COMPILE_STATUS, &isCompiledF);
-	//printf("vertex shader: %d\n", isCompiledV);
-	//printf("fragment shader: %d\n", isCompiledF);
-	if (!isCompiledV)
-		printShaderInfoLog(self->vertexShader);
-	if (!isCompiledF)
-		printShaderInfoLog(self->fragmentShader);
-
-	self->program = glCreateProgram();
-
-	glAttachShader(self->program, self->vertexShader);
-	glAttachShader(self->program, self->fragmentShader);
-	glLinkProgram(self->program);
-
-	// TODO: error handling
-	GLint isLinked = 0;
-	glGetProgramiv(
-		self->program,
-		GL_LINK_STATUS,
-		&isLinked
-	);
-	//printf("link status: %d\n", isLinked);
-	if (!isLinked)
-		printProgramInfoLog(self->program);
+		return false;
+	}
+	self->programGL = self->program->getGLProgram();
 
 	glEnableVertexAttribArray(0); // vertex position attrib
 	glEnableVertexAttribArray(1); // vertex color attrib
@@ -132,7 +96,8 @@ void setUpShaders(glrenderer_ShapeBatch *self)
 	self->mMatrix[2][1] = 0;
 	self->mMatrix[2][2] = 1;
 
-	glUseProgram(self->program);
+	self->program->use();
+
 	glUniformMatrix3fv(
 		0, // vp matrix
 		1,
@@ -147,6 +112,8 @@ void setUpShaders(glrenderer_ShapeBatch *self)
 	);
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
+
+	return true;
 }
 
 /*****
@@ -157,7 +124,7 @@ C interface
 
 void ShapeBatch_begin(glrenderer_ShapeBatch *self)
 {
-	glUseProgram(self->program);
+	self->program->use();
 }
 
 void ShapeBatch_end(glrenderer_ShapeBatch *self)
@@ -305,7 +272,7 @@ void ShapeBatch_ignoreCamera(glrenderer_ShapeBatch *self)
 	self->mMatrix[2][0] = 0;
 	self->mMatrix[2][1] = 0;
 
-	glUseProgram(self->program);
+	self->program->use();
 	glUniformMatrix3fv(
 		1, // model uniform
 		1,
@@ -396,9 +363,7 @@ static PyObject* glrenderer_ShapeBatch_new(PyTypeObject *type, PyObject *args, P
 
 static void glrenderer_ShapeBatch_dealloc(glrenderer_ShapeBatch *self)
 {
-	glDeleteShader(self->fragmentShader);
-	glDeleteShader(self->vertexShader);
-	glDeleteProgram(self->program);
+	delete self->program;
 
 	glDeleteBuffers(1, &self->vbo);
 	glDeleteVertexArrays(1, &self->vao);
@@ -424,7 +389,11 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 	}
 	memset(self->vertexData, 0, 6 * sizeof(GLfloat) * self->maxVertices);
 
-	setUpShaders(self);
+	if (!setUpShaders(self)) {
+		free(self->vertexData);
+		self->vertexData = NULL;
+		return -1;
+	}
 
 	glGenBuffers(1, &self->vbo);
 	glGenVertexArrays(1, &self->vao);
@@ -748,7 +717,7 @@ static PyObject *glrenderer_ShapeBatch_followCamera(glrenderer_ShapeBatch *self,
 	self->mMatrix[2][0] = -x * parallax;
 	self->mMatrix[2][1] = -y * parallax;
 
-	glUseProgram(self->program);
+	self->program->use();
 	glUniformMatrix3fv(
 		1, // model uniform
 		1,
@@ -782,7 +751,7 @@ static PyMethodDef glrenderer_ShapeBatch_methods[] = {
 };
 
 static PyMemberDef glrenderer_ShapeBatch_members[] = {
-	{ "program", T_UINT, offsetof(glrenderer_ShapeBatch, program), READONLY, 0 },
+	{ "program", T_UINT, offsetof(glrenderer_ShapeBatch, programGL), READONLY, 0 },
 	{ "pointSize", T_FLOAT, offsetof(glrenderer_ShapeBatch, pointSize), 0, 0 },
 	{ 0 }
 };
