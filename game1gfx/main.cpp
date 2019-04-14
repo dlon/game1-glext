@@ -244,9 +244,34 @@ static PyObject* glrenderer_init(PyObject *self, PyObject *args) {
 #include "ParticleSystemRenderer.h"
 #include "gfx.h"
 #include "shapes.h"
+#include "particles.h"
 
 static ParticleSystemRenderer *particleRenderer = nullptr;
 static ParticleSystemCollection *particleSystemCollection = nullptr;
+
+PyObject * glrenderer_drawParticleSystem(PyObject *self, PyObject *args, PyObject *kw)
+{
+	char *keywords[] = {
+		"renderer",
+		"particleSystem",
+		NULL
+	};
+	PyObject *renderer;
+	ParticleSystemObject *sysObj;
+
+	if (!PyArg_ParseTupleAndKeywords(
+		args, kw, "OO!", keywords,
+		&renderer,
+		&ParticleSystemType, &sysObj))
+		return NULL;
+
+	glrenderer_ShapeBatch *shapes = getShapeBatch(renderer);
+	Batch *batch = getRendererBatch(renderer);
+
+	particleRenderer->render(shapes, batch, sysObj->system);
+
+	Py_RETURN_NONE;
+}
 
 PyObject * glrenderer_drawParticles(PyObject *self, PyObject *renderer)
 {
@@ -260,9 +285,10 @@ PyObject * glrenderer_drawParticles(PyObject *self, PyObject *renderer)
 
 
 static PyMethodDef methods[] = {
-	{ "init", glrenderer_init, METH_VARARGS },
-	{ "drawParticles", glrenderer_drawParticles, METH_O },
-	0
+	{ "init", glrenderer_init, METH_VARARGS, NULL },
+	{ "drawParticles", glrenderer_drawParticles, METH_O, NULL },
+	{ "drawParticleSystem", (PyCFunction)glrenderer_drawParticleSystem, METH_VARARGS | METH_KEYWORDS, NULL },
+	NULL
 };
 
 static void glrenderer_free(void *ptr) {
