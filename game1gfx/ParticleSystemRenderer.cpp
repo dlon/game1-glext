@@ -6,7 +6,10 @@ static void renderLineParticles(
 	Batch *batch,
 	ParticleSystem * ps
 ) {
-	ParticleArray& particles = ps->getParticles();
+	//const ParticleArray& particles = ps->getParticles();
+	SynchronizedParticleArray syncParticles = ps->getParticlesSafe();
+	const ParticleArray& particles = syncParticles.get();
+
 	int cPerParticle = particles.getComponentsPerParticle();
 	int components = particles.getNumComponents();
 
@@ -80,7 +83,10 @@ static void renderCircleParticles(
 	Batch *batch,
 	ParticleSystem * ps
 ) {
-	ParticleArray& particles = ps->getParticles();
+	//const ParticleArray& particles = ps->getParticles();
+	SynchronizedParticleArray syncParticles = ps->getParticlesSafe();
+	const ParticleArray& particles = syncParticles.get();
+
 	int cPerParticle = particles.getComponentsPerParticle();
 	int components = particles.getNumComponents();
 
