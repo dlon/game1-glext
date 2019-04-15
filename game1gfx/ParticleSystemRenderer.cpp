@@ -65,7 +65,6 @@ static void renderLineParticles(
 
 		ShapeBatch_drawLines(
 			shapes,
-			2,
 			x + point0x, y + point0y,
 			x + point1x, y + point1y
 		);

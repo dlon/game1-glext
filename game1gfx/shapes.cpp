@@ -12,7 +12,16 @@
 extern "C" float surfaceWidth;
 extern "C" float surfaceHeight;
 
-static void updateData_c(glrenderer_ShapeBatch *self, int vertCount, ...);
+
+template<GLuint primitiveType>
+void prepareShapeBatch(glrenderer_ShapeBatch *self, GLuint vertsNum)
+{
+	if (self->type != primitiveType ||
+		self->vertCount + vertsNum > self->maxVertices) {
+		ShapeBatch_end(self);
+		self->type = primitiveType;
+	}
+}
 
 /*
 shapeVertexPositionAttribute = 0
@@ -131,8 +140,9 @@ void ShapeBatch_begin(glrenderer_ShapeBatch *self)
 
 void ShapeBatch_end(glrenderer_ShapeBatch *self)
 {
-	if (!self->type)
+	if (self->type == NO_PRIMITIVE) {
 		return;
+	}
 
 	if (self->blendEnabled) {
 		glEnable(GL_BLEND);
@@ -161,7 +171,7 @@ void ShapeBatch_end(glrenderer_ShapeBatch *self)
 	glBindVertexArray(0);
 
 	self->vertCount = 0;
-	self->type = 0;
+	self->type = NO_PRIMITIVE;
 }
 
 void ShapeBatch_drawCircle(
@@ -170,13 +180,7 @@ void ShapeBatch_drawCircle(
 	float radius,
 	size_t smoothness
 ) {
-	if (self->type != GL_TRIANGLES) {
-		ShapeBatch_end(self);
-		self->type = GL_TRIANGLES;
-	}
-
-	if (self->vertCount + 3 * smoothness > self->maxVertices)
-		ShapeBatch_end(self);
+	prepareShapeBatch<GL_TRIANGLES>(self, 3 * smoothness);
 
 	float r = self->rgba[0];
 	float g = self->rgba[1];
@@ -282,78 +286,38 @@ void ShapeBatch_ignoreCamera(glrenderer_ShapeBatch *self)
 		(GLfloat*)self->mMatrix
 	);
 
+	self->circleProgram->use();
+	glUniformMatrix3fv(
+		1, // model uniform
+		1,
+		GL_FALSE,
+		(GLfloat*)self->mMatrix
+	);
+
 	self->mMatrix[2][0] = x;
 	self->mMatrix[2][1] = y;
 }
 
-static void vf_updateData_c(glrenderer_ShapeBatch *self, int pointsNum, va_list *varList)
+void updateData_nc(glrenderer_ShapeBatch *self, float x, float y)
 {
-	float x, y;
+	//if (self->vertCount + 1 > self->maxVertices)
+	//	ShapeBatch_end(self);
 
-	if (self->vertCount + pointsNum > self->maxVertices)
-		ShapeBatch_end(self);
+	size_t i = 6 * self->vertCount;
+	self->vertexData[i + 0] = x;
+	self->vertexData[i + 1] = y;
+	self->vertexData[i + 2] = self->rgba[0];
+	self->vertexData[i + 3] = self->rgba[1];
+	self->vertexData[i + 4] = self->rgba[2];
+	self->vertexData[i + 5] = self->rgba[3];
 
-	float r = self->rgba[0];
-	float g = self->rgba[1];
-	float b = self->rgba[2];
-	float a = self->rgba[3];
-
-	size_t finalCoordCount = 6 * (self->vertCount + pointsNum);
-	size_t curCoordCount = 6 * self->vertCount;
-
-	va_list vl;
-	va_copy(vl, *varList);
-
-	for (Py_ssize_t i = curCoordCount; i < finalCoordCount; i += 6)
-	{
-		x = va_arg(vl, double);
-		y = va_arg(vl, double);
-
-		self->vertexData[i + 0] = x;
-		self->vertexData[i + 1] = y;
-		self->vertexData[i + 2] = r;
-		self->vertexData[i + 3] = g;
-		self->vertexData[i + 4] = b;
-		self->vertexData[i + 5] = a;
-	}
-
-	va_end(vl);
-
-	self->vertCount += pointsNum;
+	self->vertCount++;
 }
 
-static void updateData_c(glrenderer_ShapeBatch *self, int vertCount, ...)
+void ShapeBatch_drawPoints(glrenderer_ShapeBatch *self, float x, float y)
 {
-	va_list vl;
-	va_start(vl, 2 * vertCount);
-	vf_updateData_c(self, vertCount, &vl);
-	va_end(vl);
-}
-
-void ShapeBatch_drawPoints(glrenderer_ShapeBatch *self, int numPoints, ...)
-{
-	if (self->type != GL_POINTS) {
-		ShapeBatch_end(self);
-		self->type = GL_POINTS;
-	}
-
-	va_list vl;
-	va_start(vl, 2 * numPoints);
-	vf_updateData_c(self, numPoints, &vl);
-	va_end(vl);
-}
-
-void ShapeBatch_drawLines(glrenderer_ShapeBatch *self, int numVerts, ...)
-{
-	if (self->type != GL_LINES) {
-		ShapeBatch_end(self);
-		self->type = GL_LINES;
-	}
-
-	va_list vl;
-	va_start(vl, 2 * numVerts);
-	vf_updateData_c(self, numVerts, &vl);
-	va_end(vl);
+	prepareShapeBatch<GL_POINTS, 1>(self);
+	updateData_nc(self, x, y);
 }
 
 /*****
