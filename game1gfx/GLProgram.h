@@ -7,6 +7,7 @@
 class GLProgram {
 public:
 	GLProgram(const char *vertSrc, const char *fragSrc, const char *geomSrc);
+	GLProgram(GLProgram &other) = delete;
 	~GLProgram();
 
 	bool OK();

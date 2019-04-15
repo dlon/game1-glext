@@ -45,6 +45,7 @@ void ShapeBatch_drawCircle(
 	size_t smoothness
 );
 
+void ShapeBatch_drawPoints(glrenderer_ShapeBatch *self, int numPoints, ...);
 void ShapeBatch_drawLines(glrenderer_ShapeBatch *self, int numVerts, ...);
 
 void ShapeBatch_setColor(glrenderer_ShapeBatch *self, float r, float g, float b, float a);

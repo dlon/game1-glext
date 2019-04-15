@@ -12,6 +12,8 @@
 extern "C" float surfaceWidth;
 extern "C" float surfaceHeight;
 
+static void updateData_c(glrenderer_ShapeBatch *self, int vertCount, ...);
+
 /*
 shapeVertexPositionAttribute = 0
 shapeVertexColorAttribute = 1
@@ -291,7 +293,6 @@ static void vf_updateData_c(glrenderer_ShapeBatch *self, int pointsNum, va_list 
 	if (self->vertCount + pointsNum > self->maxVertices)
 		ShapeBatch_end(self);
 
-	// TODO: immediate access to floats
 	float r = self->rgba[0];
 	float g = self->rgba[1];
 	float b = self->rgba[2];
@@ -326,6 +327,19 @@ static void updateData_c(glrenderer_ShapeBatch *self, int vertCount, ...)
 	va_list vl;
 	va_start(vl, 2 * vertCount);
 	vf_updateData_c(self, vertCount, &vl);
+	va_end(vl);
+}
+
+void ShapeBatch_drawPoints(glrenderer_ShapeBatch *self, int numPoints, ...)
+{
+	if (self->type != GL_POINTS) {
+		ShapeBatch_end(self);
+		self->type = GL_POINTS;
+	}
+
+	va_list vl;
+	va_start(vl, 2 * numPoints);
+	vf_updateData_c(self, numPoints, &vl);
 	va_end(vl);
 }
 

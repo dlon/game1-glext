@@ -18,6 +18,9 @@ GLProgram::~GLProgram()
 	if (errorState ^ FRAG_FAILED) {
 		glDeleteShader(fragShader);
 	}
+	if (geomSrc && errorState ^ GEOM_FAILED) {
+		glDeleteShader(geomShader);
+	}
 	if (errorState ^ LINK_FAILED) {
 		glDeleteProgram(program);
 	}
@@ -40,13 +43,16 @@ static bool compileShader(GLenum shaderType, const char *src, GLuint *ret)
 
 void GLProgram::compile()
 {
-	// TODO: geometry shader support
 	if (!compileShader(GL_VERTEX_SHADER, vertSrc, &vertShader)) {
 		errorState = VERT_FAILED;
 		return;
 	}
 	if (!compileShader(GL_FRAGMENT_SHADER, fragSrc, &fragShader)) {
 		errorState = FRAG_FAILED;
+		return;
+	}
+	if (geomSrc && !compileShader(GL_GEOMETRY_SHADER, geomSrc, &geomShader)) {
+		errorState = GEOM_FAILED;
 		return;
 	}
 }
@@ -59,6 +65,8 @@ void GLProgram::link()
 	program = glCreateProgram();
 	glAttachShader(program, vertShader);
 	glAttachShader(program, fragShader);
+	if (geomSrc)
+		glAttachShader(program, geomShader);
 	glLinkProgram(program);
 
 	GLint isLinked;
@@ -79,7 +87,7 @@ bool GLProgram::OK()
 
 bool GLProgram::compiledOK()
 {
-	return !(errorState & (VERT_FAILED | FRAG_FAILED));
+	return !(errorState & (VERT_FAILED | FRAG_FAILED | GEOM_FAILED));
 }
 
 bool GLProgram::linkedOK()
@@ -97,6 +105,8 @@ const char *GLProgram::getErrorMessage()
 		return getShaderInfoLog(vertShader);
 	case FRAG_FAILED:
 		return getShaderInfoLog(fragShader);
+	case GEOM_FAILED:
+		return getShaderInfoLog(geomShader);
 	case LINK_FAILED:
 		return getProgramInfoLog(program);
 	}
