@@ -95,18 +95,42 @@ bool GLProgram::linkedOK()
 	return !(errorState & LINK_FAILED);
 }
 
+/*static void concatProgramInfoLog(GLuint program, char *buf, size_t maxsize)
+{
+	size_t curLen = strlen(buf);
+	if (curLen + 1 >= maxsize)
+		return;
+	glGetProgramInfoLog(program, maxsize - curLen, 0, buf);
+}*/
+
+static void concatShaderInfoLog(GLuint shader, char *buf, size_t maxsize)
+{
+	size_t curLen = strlen(buf);
+	if (curLen + 1 >= maxsize)
+		return;
+	glGetShaderInfoLog(shader, maxsize - curLen, nullptr, buf + curLen);
+}
+
 const char *GLProgram::getErrorMessage()
 {
+	static char infoBuffer[1000];
+
 	switch (errorState) {
 	case OK_STATE:
 		return nullptr;
 
 	case VERT_FAILED:
-		return getShaderInfoLog(vertShader);
+		strcpy(infoBuffer, "Vertex shader compilation error: ");
+		concatShaderInfoLog(vertShader, infoBuffer, sizeof(infoBuffer));
+		return infoBuffer;
 	case FRAG_FAILED:
-		return getShaderInfoLog(fragShader);
+		strcpy(infoBuffer, "Fragment shader compilation error: ");
+		concatShaderInfoLog(fragShader, infoBuffer, sizeof(infoBuffer));
+		return infoBuffer;
 	case GEOM_FAILED:
-		return getShaderInfoLog(geomShader);
+		strcpy(infoBuffer, "Geometry shader compilation error: ");
+		concatShaderInfoLog(geomShader, infoBuffer, sizeof(infoBuffer));
+		return infoBuffer;
 	case LINK_FAILED:
 		return getProgramInfoLog(program);
 	}

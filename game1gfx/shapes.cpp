@@ -60,6 +60,84 @@ static const char fragmentShaderSource[] =
 "	colorResult = vertColor;"
 "}";
 
+static const char vertexCircleShaderSource[] = R"(
+#version 440
+
+layout(location = 0) uniform mat3 vpMatrix;
+layout(location = 1) uniform mat3 mMatrix;
+
+layout(location = 0) in vec2 vPosition;
+layout(location = 1) in vec4 vColor;
+layout(location = 2) in float vRadius;
+
+out VOUT {
+	vec4 vertColor;
+	float radius;
+} vertexOut;
+
+void main(void) {
+	gl_Position = vec4(vPosition, 0.0, 1.0);
+	vertexOut.radius = vRadius;
+	vertexOut.vertColor = vColor;
+};)";
+
+static const char geometryCircleShaderSource[] = R"(
+#version 440
+
+layout(points) in;
+layout(triangle_strip, max_vertices = 70) out;
+
+uniform mat3 vpMatrix;
+uniform mat3 mMatrix;
+
+layout(location = 2) uniform float segments;
+
+in VOUT {
+	vec4 vertColor;
+	float radius;
+} vertexOut[];
+
+out vec4 vertColor;
+
+const float PI = 3.14159265;
+
+void main(void) {
+	vec2 pos = gl_in[0].gl_Position.xy + vec2(vertexOut[0].radius);
+	//const float segments = 20.0;
+
+	float prevX;
+	float x = vertexOut[0].radius;
+	float y = 0.0f;
+
+	float c = cos(2.0 * PI / segments);
+	float s = sqrt(1 - c*c);
+
+	for (float i=0.0; i <= segments; i += 1.0) {
+		gl_Position = vec4(vpMatrix * mMatrix * vec3(pos + vec2(x, y), 1.0), 1.0);
+		vertColor = vertexOut[0].vertColor;
+		EmitVertex();
+
+		gl_Position = vec4(vpMatrix * mMatrix * vec3(pos, 1.0), 1.0);
+		vertColor = vertexOut[0].vertColor;
+		EmitVertex();
+
+		prevX = x;
+		x = x * c - y * s;
+		y = y * c + prevX * s;
+	}
+	EndPrimitive();
+};)";
+
+static const char fragmentCircleShaderSource[] = R"(
+#version 440
+
+in vec4 vertColor;
+layout (location = 0) out vec4 colorResult;
+
+void main(void) {
+	colorResult = vertColor;
+})";
+
 
 bool setUpShaders(glrenderer_ShapeBatch *self)
 {
@@ -73,6 +151,25 @@ bool setUpShaders(glrenderer_ShapeBatch *self)
 		return false;
 	}
 	self->programGL = self->program->getGLProgram();
+
+	self->circleProgram = new GLProgram(
+		vertexCircleShaderSource, fragmentCircleShaderSource, geometryCircleShaderSource);
+	if (!self->circleProgram->OK()) {
+		PyErr_SetString(glrenderer_GraphicsError, self->circleProgram->getErrorMessage());
+
+		delete self->circleProgram;
+		self->circleProgram = nullptr;
+
+		return false;
+	}
+
+	self->circleProgram->use();
+
+	glEnableVertexAttribArray(0); // vertex position attrib
+	glEnableVertexAttribArray(1); // vertex color attrib
+	glEnableVertexAttribArray(2); // vertex radius attrib
+
+	self->program->use();
 
 	glEnableVertexAttribArray(0); // vertex position attrib
 	glEnableVertexAttribArray(1); // vertex color attrib
@@ -121,6 +218,25 @@ bool setUpShaders(glrenderer_ShapeBatch *self)
 		GL_FALSE,
 		(GLfloat*)self->mMatrix
 	);
+	glUniform1f(2, self->pointSize);
+
+	glEnable(GL_PROGRAM_POINT_SIZE);
+
+	self->circleProgram->use();
+
+	glUniformMatrix3fv(
+		0, // vp matrix
+		1,
+		GL_FALSE,
+		(GLfloat*)matrix
+	);
+	glUniformMatrix3fv(
+		1, // m matrix
+		1,
+		GL_FALSE,
+		(GLfloat*)self->mMatrix
+	);
+	glUniform1f(2, SHAPEBATCH_DEFAULT_SMOOTHNESS);
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -152,21 +268,44 @@ void ShapeBatch_end(glrenderer_ShapeBatch *self)
 		glDisable(GL_BLEND);
 	}
 
-	glBindVertexArray(self->vao);
+	if (self->type != CIRCLE_RENDER) {
+		glBindVertexArray(self->vao);
+		glBindBuffer(GL_ARRAY_BUFFER, self->vbo);
 
-	glBindBuffer(GL_ARRAY_BUFFER, self->vbo);
-	glBufferData(
-		GL_ARRAY_BUFFER,
-		6 * self->vertCount * sizeof(GLfloat),
-		self->vertexData,
-		GL_DYNAMIC_DRAW // TODO: try using *Sub*
-	);
+		glBufferData(
+			GL_ARRAY_BUFFER,
+			6 * self->vertCount * sizeof(GLfloat),
+			self->vertexData,
+			GL_DYNAMIC_DRAW // TODO: try using *Sub*
+		);
 
-	glDrawArrays(
-		self->type,
-		0,
-		self->vertCount
-	);
+		glDrawArrays(
+			self->type,
+			0,
+			self->vertCount
+		);
+	}
+	else {
+		glBindVertexArray(self->vaoCircle);
+		glBindBuffer(GL_ARRAY_BUFFER, self->vbo);
+
+		glBufferData(
+			GL_ARRAY_BUFFER,
+			7 * self->vertCount * sizeof(GLfloat),
+			self->vertexData,
+			GL_DYNAMIC_DRAW
+		);
+
+		self->circleProgram->use();
+
+		glDrawArrays(
+			GL_POINTS,
+			0,
+			self->vertCount
+		);
+
+		self->program->use();
+	}
 
 	glBindVertexArray(0);
 
@@ -180,6 +319,34 @@ void ShapeBatch_drawCircle(
 	float radius,
 	size_t smoothness
 ) {
+	//prepareShapeBatch<CIRCLE_RENDER, 1>(self);
+	//self->circleProgram->use();
+	//updateData_nc(self, x, y);
+
+	// TODO: generalize the vertex count issue
+	// TODO: flush if "smoothness" changes
+
+	if (self->type != CIRCLE_RENDER ||
+		7 * self->vertCount + 7 > self->maxVertices * 6) {
+		ShapeBatch_end(self);
+		self->type = CIRCLE_RENDER;
+		self->circleProgram->use();
+	}
+
+	glUniform1f(2, smoothness);
+
+	size_t i = 7 * self->vertCount;
+	self->vertexData[i + 0] = x;
+	self->vertexData[i + 1] = y;
+	self->vertexData[i + 2] = self->rgba[0];
+	self->vertexData[i + 3] = self->rgba[1];
+	self->vertexData[i + 4] = self->rgba[2];
+	self->vertexData[i + 5] = self->rgba[3];
+	self->vertexData[i + 6] = radius;
+
+	self->vertCount++;
+
+#if 0
 	prepareShapeBatch<GL_TRIANGLES>(self, 3 * smoothness);
 
 	float r = self->rgba[0];
@@ -189,9 +356,7 @@ void ShapeBatch_drawCircle(
 
 	float k = 2.0f * PI / smoothness;
 	float c = cosf(k);
-	float s = sqrtf(1.f - c * c);
-	if (smoothness == 3)
-		s = -s;
+	float s = sqrtf(1.f - c * c); // assume positive since smoothness >= 2 ==> k < pi
 
 	float prevX;
 	float relX = radius;
@@ -228,6 +393,7 @@ void ShapeBatch_drawCircle(
 	}
 
 	self->vertCount += 3 * smoothness;
+#endif
 }
 
 void ShapeBatch_drawCircle(
@@ -314,12 +480,6 @@ void updateData_nc(glrenderer_ShapeBatch *self, float x, float y)
 	self->vertCount++;
 }
 
-void ShapeBatch_drawPoints(glrenderer_ShapeBatch *self, float x, float y)
-{
-	prepareShapeBatch<GL_POINTS, 1>(self);
-	updateData_nc(self, x, y);
-}
-
 /*****
 
 Python interface
@@ -334,7 +494,7 @@ static PyObject* glrenderer_ShapeBatch_new(PyTypeObject *type, PyObject *args, P
 		self->rgba[1] = 1.0f;
 		self->rgba[2] = 1.0f;
 		self->rgba[3] = 1.0f;
-		self->pointSize = 1.0f;
+		self->pointSize = 5.0f;
 	}
 	return (PyObject*)self;
 }
@@ -342,11 +502,13 @@ static PyObject* glrenderer_ShapeBatch_new(PyTypeObject *type, PyObject *args, P
 static void glrenderer_ShapeBatch_dealloc(glrenderer_ShapeBatch *self)
 {
 	delete self->program;
+	delete self->circleProgram;
 
 	glDeleteBuffers(1, &self->vbo);
 	glDeleteVertexArrays(1, &self->vao);
+	glDeleteVertexArrays(1, &self->vaoCircle);
 
-	free(self->vertexData);
+	delete[] self->vertexData;
 	Py_TYPE(self)->tp_free(self);
 }
 
@@ -361,21 +523,19 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 	if (self->maxVertices == 0)
 		return -1;
 
-	self->vertexData = (GLfloat*) malloc(6 * sizeof(GLfloat) * self->maxVertices);
+	self->vertexData = new GLfloat[6 * self->maxVertices];
 	if (!self->vertexData) {
 		return -1;
 	}
 	memset(self->vertexData, 0, 6 * sizeof(GLfloat) * self->maxVertices);
 
 	if (!setUpShaders(self)) {
-		free(self->vertexData);
+		delete[] self->vertexData;
 		self->vertexData = NULL;
 		return -1;
 	}
 
 	glGenBuffers(1, &self->vbo);
-	glGenVertexArrays(1, &self->vao);
-
 	glBindBuffer(GL_ARRAY_BUFFER, self->vbo);
 	glBufferData(
 		GL_ARRAY_BUFFER,
@@ -384,6 +544,10 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 		GL_DYNAMIC_DRAW
 	);
 
+	//
+	// standard program
+	//
+	glGenVertexArrays(1, &self->vao);
 	glBindVertexArray(self->vao);
 	glEnableVertexAttribArray(0); // vertex position attrib
 	glEnableVertexAttribArray(1); // vertex color attrib
@@ -403,6 +567,40 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 		6 * sizeof(GLfloat),
 		(const GLvoid*)(2 * sizeof(GLfloat))
 	);
+
+	//
+	// circle program
+	//
+	glGenVertexArrays(1, &self->vaoCircle);
+	glBindVertexArray(self->vaoCircle);
+	glEnableVertexAttribArray(0); // vertex position attrib
+	glEnableVertexAttribArray(1); // vertex color attrib
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(
+		0, // position
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		7 * sizeof(GLfloat),
+		0 * sizeof(GLfloat)
+	);
+	glVertexAttribPointer(
+		1, // color
+		4,
+		GL_FLOAT,
+		GL_TRUE,
+		7 * sizeof(GLfloat),
+		(const GLvoid*)(2 * sizeof(GLfloat))
+	);
+	glVertexAttribPointer(
+		2, // radius
+		1,
+		GL_FLOAT,
+		GL_TRUE,
+		7 * sizeof(GLfloat),
+		(const GLvoid*)(6 * sizeof(GLfloat))
+	);
+
 	glBindVertexArray(0);
 
 	self->blendMode[0] = GL_SRC_ALPHA;
@@ -696,6 +894,14 @@ static PyObject *glrenderer_ShapeBatch_followCamera(glrenderer_ShapeBatch *self,
 	self->mMatrix[2][1] = -y * parallax;
 
 	self->program->use();
+	glUniformMatrix3fv(
+		1, // model uniform
+		1,
+		GL_FALSE,
+		(GLfloat*)self->mMatrix
+	);
+
+	self->circleProgram->use();
 	glUniformMatrix3fv(
 		1, // model uniform
 		1,

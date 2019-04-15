@@ -9,10 +9,14 @@
 
 typedef struct {
 	PyObject_HEAD
+	
 	GLProgram *program;
 	GLuint programGL;
+	GLProgram *circleProgram;
+
 	GLuint vbo;
 	GLuint vao;
+	GLuint vaoCircle;
 	float pointSize;
 	unsigned int maxVertices;
 	float rgba[4];
@@ -25,6 +29,7 @@ typedef struct {
 } glrenderer_ShapeBatch;
 
 #define NO_PRIMITIVE -1
+#define CIRCLE_RENDER -2
 
 extern "C" {
 	extern PyTypeObject ShapeBatch_type;
