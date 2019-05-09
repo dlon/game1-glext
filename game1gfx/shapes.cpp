@@ -12,6 +12,19 @@
 extern "C" float surfaceWidth;
 extern "C" float surfaceHeight;
 
+#define SHAPES_POSITION_ATTRIB 0
+#define SHAPES_COLOR_ATTRIB 1
+#define SHAPES_RADIUS_ATTRIB 2
+
+#define SHAPES_VIEWMATRIX_UNIFORM 0
+#define SHAPES_MODELMATRIX_UNIFORM 1
+#define SHAPES_POINTSIZE_UNIFORM 2
+
+#define CIRCLE_SEGMENTS_UNIFORM 2
+
+#define STRINGIZE(x) #x
+#define XSTRINGIZE(x) STRINGIZE(x)
+
 
 template<GLuint primitiveType>
 void prepareShapeBatch(glrenderer_ShapeBatch *self, GLuint vertsNum)
@@ -23,24 +36,15 @@ void prepareShapeBatch(glrenderer_ShapeBatch *self, GLuint vertsNum)
 	}
 }
 
-/*
-shapeVertexPositionAttribute = 0
-shapeVertexColorAttribute = 1
-
-shapeVMatrixUniform = 0
-shapeMMatrixUniform = 1
-shapePointSizeUniform = 2
-*/
-
 static const char vertexShaderSource[] =
 "#version 440\n"
 
-"layout(location = 0) uniform mat3 vpMatrix;"
-"layout(location = 1) uniform mat3 mMatrix;"
-"layout(location = 2) uniform float pointSize;"
+"layout(location = " XSTRINGIZE(SHAPES_VIEWMATRIX_UNIFORM)  ") uniform mat3 vpMatrix;"
+"layout(location = " XSTRINGIZE(SHAPES_MODELMATRIX_UNIFORM) ") uniform mat3 mMatrix;"
+"layout(location = " XSTRINGIZE(SHAPES_POINTSIZE_UNIFORM) ") uniform float pointSize;"
 
-"layout(location = 0) in vec2 vPosition;"
-"layout(location = 1) in vec4 vColor;"
+"layout(location = " XSTRINGIZE(SHAPES_POSITION_ATTRIB) ") in vec2 vPosition;"
+"layout(location = " XSTRINGIZE(SHAPES_COLOR_ATTRIB) ") in vec4 vColor;"
 
 "out vec4 vertColor;"
 
@@ -63,12 +67,12 @@ static const char fragmentShaderSource[] =
 static const char vertexCircleShaderSource[] = R"(
 #version 440
 
-layout(location = 0) uniform mat3 vpMatrix;
-layout(location = 1) uniform mat3 mMatrix;
+layout(location = )" XSTRINGIZE(SHAPES_VIEWMATRIX_UNIFORM) R"() uniform mat3 vpMatrix;
+layout(location = )" XSTRINGIZE(SHAPES_MODELMATRIX_UNIFORM) R"() uniform mat3 mMatrix;
 
-layout(location = 0) in vec2 vPosition;
-layout(location = 1) in vec4 vColor;
-layout(location = 2) in float vRadius;
+layout(location = )" XSTRINGIZE(SHAPES_POSITION_ATTRIB) R"() in vec2 vPosition;
+layout(location = )" XSTRINGIZE(SHAPES_COLOR_ATTRIB) R"() in vec4 vColor;
+layout(location = )" XSTRINGIZE(SHAPES_RADIUS_ATTRIB) R"() in float vRadius;
 
 out VOUT {
 	vec4 vertColor;
@@ -90,7 +94,7 @@ layout(triangle_strip, max_vertices = 70) out;
 uniform mat3 vpMatrix;
 uniform mat3 mMatrix;
 
-layout(location = 2) uniform float segments;
+layout(location = )" XSTRINGIZE(CIRCLE_SEGMENTS_UNIFORM) R"() uniform float segments;
 
 in VOUT {
 	vec4 vertColor;
@@ -103,7 +107,6 @@ const float PI = 3.14159265;
 
 void main(void) {
 	vec2 pos = gl_in[0].gl_Position.xy + vec2(vertexOut[0].radius);
-	//const float segments = 20.0;
 
 	float prevX;
 	float x = vertexOut[0].radius;
@@ -165,14 +168,14 @@ bool setUpShaders(glrenderer_ShapeBatch *self)
 
 	self->circleProgram->use();
 
-	glEnableVertexAttribArray(0); // vertex position attrib
-	glEnableVertexAttribArray(1); // vertex color attrib
-	glEnableVertexAttribArray(2); // vertex radius attrib
+	glEnableVertexAttribArray(SHAPES_POSITION_ATTRIB);
+	glEnableVertexAttribArray(SHAPES_COLOR_ATTRIB);
+	glEnableVertexAttribArray(SHAPES_RADIUS_ATTRIB);
 
 	self->program->use();
 
-	glEnableVertexAttribArray(0); // vertex position attrib
-	glEnableVertexAttribArray(1); // vertex color attrib
+	glEnableVertexAttribArray(SHAPES_POSITION_ATTRIB);
+	glEnableVertexAttribArray(SHAPES_COLOR_ATTRIB);
 
 	GLfloat projectionMatrix[3][3] = {
 		{ 2.0f / surfaceWidth, 0, 0 },
@@ -207,36 +210,36 @@ bool setUpShaders(glrenderer_ShapeBatch *self)
 	self->program->use();
 
 	glUniformMatrix3fv(
-		0, // vp matrix
+		SHAPES_VIEWMATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)matrix
 	);
 	glUniformMatrix3fv(
-		1, // m matrix
+		SHAPES_MODELMATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)self->mMatrix
 	);
-	glUniform1f(2, self->pointSize);
+	glUniform1f(SHAPES_POINTSIZE_UNIFORM, self->pointSize);
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	self->circleProgram->use();
 
 	glUniformMatrix3fv(
-		0, // vp matrix
+		SHAPES_VIEWMATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)matrix
 	);
 	glUniformMatrix3fv(
-		1, // m matrix
+		SHAPES_MODELMATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)self->mMatrix
 	);
-	glUniform1f(2, SHAPEBATCH_DEFAULT_SMOOTHNESS);
+	glUniform1f(CIRCLE_SEGMENTS_UNIFORM, SHAPEBATCH_DEFAULT_SMOOTHNESS);
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
@@ -333,7 +336,7 @@ void ShapeBatch_drawCircle(
 		self->circleProgram->use();
 	}
 
-	glUniform1f(2, smoothness);
+	glUniform1f(CIRCLE_SEGMENTS_UNIFORM, smoothness);
 
 	size_t i = 7 * self->vertCount;
 	self->vertexData[i + 0] = x;
@@ -446,7 +449,7 @@ void ShapeBatch_ignoreCamera(glrenderer_ShapeBatch *self)
 
 	self->program->use();
 	glUniformMatrix3fv(
-		1, // model uniform
+		SHAPES_MODELMATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)self->mMatrix
@@ -454,7 +457,7 @@ void ShapeBatch_ignoreCamera(glrenderer_ShapeBatch *self)
 
 	self->circleProgram->use();
 	glUniformMatrix3fv(
-		1, // model uniform
+		SHAPES_MODELMATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)self->mMatrix
@@ -549,10 +552,10 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 	//
 	glGenVertexArrays(1, &self->vao);
 	glBindVertexArray(self->vao);
-	glEnableVertexAttribArray(0); // vertex position attrib
-	glEnableVertexAttribArray(1); // vertex color attrib
+	glEnableVertexAttribArray(SHAPES_POSITION_ATTRIB);
+	glEnableVertexAttribArray(SHAPES_COLOR_ATTRIB);
 	glVertexAttribPointer(
-		0, // position
+		SHAPES_POSITION_ATTRIB,
 		2,
 		GL_FLOAT,
 		GL_FALSE,
@@ -560,7 +563,7 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 		0 * sizeof(GLfloat)
 	);
 	glVertexAttribPointer(
-		1, // color
+		SHAPES_COLOR_ATTRIB,
 		4,
 		GL_FLOAT,
 		GL_TRUE,
@@ -573,11 +576,11 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 	//
 	glGenVertexArrays(1, &self->vaoCircle);
 	glBindVertexArray(self->vaoCircle);
-	glEnableVertexAttribArray(0); // vertex position attrib
-	glEnableVertexAttribArray(1); // vertex color attrib
-	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(SHAPES_POSITION_ATTRIB);
+	glEnableVertexAttribArray(SHAPES_COLOR_ATTRIB);
+	glEnableVertexAttribArray(SHAPES_RADIUS_ATTRIB);
 	glVertexAttribPointer(
-		0, // position
+		SHAPES_POSITION_ATTRIB,
 		2,
 		GL_FLOAT,
 		GL_FALSE,
@@ -585,7 +588,7 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 		0 * sizeof(GLfloat)
 	);
 	glVertexAttribPointer(
-		1, // color
+		SHAPES_COLOR_ATTRIB,
 		4,
 		GL_FLOAT,
 		GL_TRUE,
@@ -593,7 +596,7 @@ static int glrenderer_ShapeBatch_init(glrenderer_ShapeBatch *self, PyObject *arg
 		(const GLvoid*)(2 * sizeof(GLfloat))
 	);
 	glVertexAttribPointer(
-		2, // radius
+		SHAPES_RADIUS_ATTRIB,
 		1,
 		GL_FLOAT,
 		GL_TRUE,
@@ -716,7 +719,7 @@ static PyObject *glrenderer_ShapeBatch_points(glrenderer_ShapeBatch *self, PyObj
 		ShapeBatch_end(self);
 		self->type = GL_POINTS;
 	}
-	glUniform1f(2, self->pointSize);
+	glUniform1f(SHAPES_POINTSIZE_UNIFORM, self->pointSize);
 	updateData(self, args);
 	Py_RETURN_NONE;
 }
@@ -895,7 +898,7 @@ static PyObject *glrenderer_ShapeBatch_followCamera(glrenderer_ShapeBatch *self,
 
 	self->program->use();
 	glUniformMatrix3fv(
-		1, // model uniform
+		SHAPES_MODELMATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)self->mMatrix
@@ -903,7 +906,7 @@ static PyObject *glrenderer_ShapeBatch_followCamera(glrenderer_ShapeBatch *self,
 
 	self->circleProgram->use();
 	glUniformMatrix3fv(
-		1, // model uniform
+		SHAPES_MODELMATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)self->mMatrix
