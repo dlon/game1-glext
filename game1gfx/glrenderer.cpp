@@ -297,6 +297,7 @@ static void glrenderer_free(void *ptr) {
 		delete particleRenderer;
 		particleRenderer = nullptr;
 	}
+	gfx_cleanup();
 }
 
 static struct PyModuleDef glextModule = {
@@ -334,6 +335,9 @@ PyInit_glrenderer(void)
 
 	m = PyModule_Create(&glextModule);
 	if (m == NULL)
+		return NULL;
+
+	if (!gfx_init())
 		return NULL;
 
 	if (entity_init(m) == -1) {

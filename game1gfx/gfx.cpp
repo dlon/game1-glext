@@ -1,19 +1,33 @@
 #include "gfx.h"
 #include "Texture.h"
 
+static PyObject *loadFileFunc = nullptr;
+
+bool gfx_init()
+{
+	if (loadFileFunc)
+		return true;
+	PyObject *glMod = PyImport_ImportModule("gfx.gl");
+	if (!glMod)
+		return false;
+	loadFileFunc = PyObject_GetAttrString(glMod, "loadFile");
+	Py_DECREF(glMod);
+	if (!loadFileFunc)
+		return false;
+	return true;
+}
+
+void gfx_cleanup()
+{
+	if (loadFileFunc) {
+		Py_DECREF(loadFileFunc);
+		loadFileFunc = nullptr;
+	}
+}
 
 TextureRegion* gfx_loadOrGet(PyObject *obj)
 {
-	PyObject *glMod = PyImport_ImportModule("gfx.gl");
-	if (!glMod)
-		return NULL;
-	PyObject *loadFunc = PyObject_GetAttrString(glMod, "loadFile");
-	Py_DECREF(glMod);
-	if (!loadFunc)
-		return NULL;
-
-	PyObject *img = PyObject_CallFunction(loadFunc, "O", obj);
-	Py_DECREF(loadFunc);
+	PyObject *img = PyObject_CallFunction(loadFileFunc, "O", obj);
 	if (!img)
 		return NULL;
 
