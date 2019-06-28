@@ -183,6 +183,7 @@
     <ClCompile Include="shapes.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureRegion.cpp" />
+    <ClCompile Include="tiles.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="batch.hpp" />
@@ -197,6 +198,7 @@
     <ClInclude Include="shapes.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureRegion.h" />
+    <ClInclude Include="tiles.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

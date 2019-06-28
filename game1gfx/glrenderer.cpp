@@ -9,6 +9,7 @@
 #include "shapes.h"
 #include "entity.h"
 #include "glrenderer.h"
+#include "tiles.h"
 
 
 extern "C" float surfaceWidth;
@@ -374,6 +375,15 @@ PyInit_glrenderer(void)
 	}
 
 	particleRenderer = new ParticleSystemRenderer;
+
+	PyImport_AddModule("glrenderer.tiles");
+	PyObject *tilesMod = tiles_init();
+	if (!tilesMod) {
+		return NULL;
+	}
+	if (PyModule_AddObject(m, "tiles", tilesMod)) {
+		return NULL;
+	}
 
 	return m;
 }
