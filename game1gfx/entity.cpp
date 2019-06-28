@@ -2,11 +2,35 @@
 #include "entity/particles.h"
 #include <Python.h>
 
+PyObject *entity_glMod = nullptr;
+PyObject *entity_deepcopy = nullptr;
+
+static int initDefaultRenderer()
+{
+	entity_glMod = PyImport_ImportModule("gfx.gl");
+	if (!entity_glMod)
+		return -1;
+	
+	// import copy.deepcopy
+	PyObject *copyMod = PyImport_ImportModule("copy");
+	if (!copyMod)
+		return NULL;
+	entity_deepcopy = PyObject_GetAttrString(copyMod, "deepcopy");
+	Py_DECREF(copyMod);
+	if (!entity_deepcopy)
+		return NULL;
+
+	if (PyType_Ready(&DefaultEntityRendererType) < 0)
+		return -1;
+
+	return 0;
+}
+
 int entity_init(PyObject *glExtModule)
 {
 	// TODO: create a submodule "entity" to contain the renderers
 
-	if (PyType_Ready(&DefaultEntityRendererType) < 0)
+	if (initDefaultRenderer() < 0)
 		return -1;
 	if (PyType_Ready(&ParticleGroupRendererType) < 0)
 		return -1;
@@ -14,6 +38,19 @@ int entity_init(PyObject *glExtModule)
 	PyModule_AddObject(glExtModule, DefaultEntityRendererType.tp_name, (PyObject *)&DefaultEntityRendererType);
 	PyModule_AddObject(glExtModule, ParticleGroupRendererType.tp_name, (PyObject *)&ParticleGroupRendererType);
 
+	return 0;
+}
+
+int entity_cleanup()
+{
+	if (entity_deepcopy) {
+		Py_DECREF(entity_deepcopy);
+		entity_deepcopy = nullptr;
+	}
+	if (entity_glMod) {
+		Py_DECREF(entity_glMod);
+		entity_glMod = nullptr;
+	}
 	return 0;
 }
 

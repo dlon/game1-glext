@@ -297,6 +297,7 @@ static void glrenderer_free(void *ptr) {
 		delete particleRenderer;
 		particleRenderer = nullptr;
 	}
+	entity_cleanup();
 	gfx_cleanup();
 }
 

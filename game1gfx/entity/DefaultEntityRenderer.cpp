@@ -7,17 +7,12 @@
 #include "../gfx.h"
 
 
+extern PyObject* entity_glMod;
+extern PyObject* entity_deepcopy;
+
 int loadSpriteDictionary(PyObject *dict)
 {
-	PyObject *gfxMod = PyImport_ImportModule("gfx");
-	if (!gfxMod)
-		return -1;
-	PyObject *glMod = PyObject_GetAttrString(gfxMod, "gl");
-	Py_DECREF(gfxMod);
-	if (!glMod)
-		return -1;
-	PyObject *loadDict = PyObject_GetAttrString(glMod, "loadDictionary");
-	Py_DECREF(glMod);
+	PyObject *loadDict = PyObject_GetAttrString(entity_glMod, "loadDictionary");
 	if (!loadDict)
 		return -1;
 
@@ -51,7 +46,7 @@ static int DefaultEntityRenderer_init(DefaultEntityRendererObject *self, PyObjec
 	if (PyObject_HasAttrString(self->entity, "sprites")) {
 		PyObject *sprites = PyObject_GetAttrString(self->entity, "sprites");
 
-		PyObject *spritesCopy = PyObject_DeepCopy(sprites);
+		PyObject *spritesCopy = PyObject_DeepCopy(sprites, entity_deepcopy);
 		loadSpriteDictionary(spritesCopy);
 
 		PyObject *entityType = PyObject_Type(self->entity);
