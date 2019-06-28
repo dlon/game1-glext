@@ -4,9 +4,10 @@
 #include <pyUtil.h>
 #include <structmember.h>
 #include "GLProgram.h"
+#include <vector>
 
 
-const char *tileVShader = R"(#version 440
+static const char *tileVShader = R"(#version 440
 
 layout(location = 0) uniform mat3 vpMatrix;
 layout(location = 2) uniform mat3 mMatrix;
@@ -59,14 +60,22 @@ void main(void) {
 )";
 
 
-static PyObject *TileMapBaseType = nullptr;
+static PyTypeObject *TileMapBaseType = nullptr;
+
+
+typedef GLfloat attributeType;
+typedef GLushort indexType;
 
 
 typedef struct {
 	PyObject_HEAD
 	GLProgram *program;
+
 	GLuint indexVbo;
+	std::vector<indexType> *indices;
+
 	GLuint vertexVbo;
+	std::vector<attributeType> *vertexAttribData;
 } TileMapObject;
 
 static PyObject *TileMap_delete(TileMapObject *self, PyObject *noarg)
@@ -95,25 +104,102 @@ PyMethodDef TileMap_methods[] = {
 	NULL
 };
 
+static PyObject* TileMap_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+	TileMapObject *self = (TileMapObject*)type->tp_alloc(type, 0);
+	if (self == NULL)
+		return NULL;
+	
+	self->indices = new std::vector<indexType>;
+	self->vertexAttribData = new std::vector<attributeType>;
+
+	return (PyObject*)self;
+}
+
+static void TileMap_dealloc(TileMapObject *self) {
+	delete self->indices;
+	delete self->vertexAttribData;
+	Py_TYPE(self)->tp_free((PyObject*)self);
+}
+
+static void TileMap_updateVerticesVBO(TileMapObject *self)
+{
+	glBindBuffer(
+		GL_ARRAY_BUFFER,
+		self->vertexVbo
+	);
+	glBufferData(
+		GL_ARRAY_BUFFER,
+		sizeof(attributeType) * self->vertexAttribData->size(),
+		self->vertexAttribData->data(),
+		GL_STATIC_DRAW
+	);
+}
+
 static int TileMap_init(TileMapObject *self, PyObject *args, PyObject *kwds)
 {
-	// TODO: setup vboTile
-	// TODO: setup index vbo
-	return Py_TYPE(self)->tp_init((PyObject*)self, args, kwds);
+	char *keywords[] = {
+		"tiles",
+		nullptr
+	};
+	PyObject *tiles;
 
-	/* TODO:
-	vboOffset = self._updateArrays()
-    # self.vboTileData.resize((vboOffset, 4 * 8), refcheck=False)
-    self._updateVBO()
-    self._initShaders()
-    self._createVAO()
-	*/
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "O", keywords, &tiles)) {
+		return -1;
+	}
+
+	// FIXME: self->vertexAttribData must be accessible as a 2D array in Python
+	// the vertex data must be set up before the base; the rest later
+	PyObject *maxTileBatchObj =
+		PyObject_GetAttrString((PyObject*)self, "maxTileBatch");
+	if (!maxTileBatchObj)
+		return -1;
+	int maxTileBatch = PyLong_AsLong(maxTileBatchObj);
+	Py_DECREF(maxTileBatchObj);
+	if (PyErr_Occurred())
+		return -1;
+	
+	self->vertexAttribData->resize(4 * 8 * maxTileBatch);
+	glGenBuffers(1, &self->vertexVbo);
+
+	// TODO: can we forgo this indirect call with a heap type object?
+	//       calling tp_base->tp_init causes recursion error
+	PyTypeObject *base = Py_TYPE(self)->tp_base;
+	if (!PyObject_CallMethod((PyObject*)base, "__init__", "OO", self, tiles))
+		return -1;
+
+	// set up index vbo
+	glGenBuffers(1, &self->indexVbo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self->indexVbo);
+
+	self->indices->resize(6 * maxTileBatch);
+	for (int index = 0; index < maxTileBatch; index++) {
+		(*self->indices)[4 * index + 0] = 4 * index + 0;
+		(*self->indices)[4 * index + 1] = 4 * index + 2;
+		(*self->indices)[4 * index + 2] = 4 * index + 1;
+		(*self->indices)[4 * index + 3] = 4 * index + 2;
+		(*self->indices)[4 * index + 4] = 4 * index + 1;
+		(*self->indices)[4 * index + 5] = 4 * index + 3;
+	}
+	glBufferData(
+		GL_ELEMENT_ARRAY_BUFFER,
+		sizeof(indexType) * self->indices->size(),
+		self->indices->data(),
+		GL_STATIC_DRAW
+	);
+
+	TileMap_updateVerticesVBO(self);
+	// TODO: create VAO
+	// TODO: set up shaders
+
+	return 0;
 }
 
 static PyType_Slot TileMap_slots[] = {
 	{ Py_tp_base, nullptr }, /* set in tiles_init */
 	{ Py_tp_init, TileMap_init },
 	{ Py_tp_methods, TileMap_methods },
+	{ Py_tp_new, TileMap_new },
+	{ Py_tp_dealloc, TileMap_dealloc },
 	{ 0 },
 };
 static PyType_Spec TileMap_spec = {
@@ -150,12 +236,11 @@ tiles_init()
 	if (!mod)
 		return NULL;
 
-	// setup TileMap type
-
+	// set up TileMap type
 	PyObject *baseTiles = PyImport_ImportModule("gfx.gl.tiles");
 	if (!baseTiles)
 		return NULL;
-	TileMapBaseType =
+	TileMapBaseType = (PyTypeObject*)
 		PyObject_GetAttrString(baseTiles, "TileMapBase");
 	Py_DECREF(baseTiles);
 	if (!TileMapBaseType)
@@ -164,6 +249,9 @@ tiles_init()
 	TileMap_slots[0].pfunc = TileMapBaseType;
 	PyObject *TileMapType =
 		PyType_FromSpec(&TileMap_spec);
+
+	if (PyType_Ready((PyTypeObject*)TileMapType) < 0)
+		return NULL;
 
 	if (PyModule_AddObject(
 		mod,
