@@ -3,12 +3,16 @@
 #include <Python.h>
 
 PyObject *entity_glMod = nullptr;
+PyObject *entity_glModLoadDict = nullptr;
 PyObject *entity_deepcopy = nullptr;
 
 static int initDefaultRenderer()
 {
 	entity_glMod = PyImport_ImportModule("gfx.gl");
 	if (!entity_glMod)
+		return -1;
+	entity_glModLoadDict = PyObject_GetAttrString(entity_glMod, "loadDictionary");
+	if (!entity_glModLoadDict)
 		return -1;
 	
 	// import copy.deepcopy
@@ -19,6 +23,9 @@ static int initDefaultRenderer()
 	Py_DECREF(copyMod);
 	if (!entity_deepcopy)
 		return NULL;
+
+	if (DefaultEntityRenderer_init() < 0)
+		return -1;
 
 	if (PyType_Ready(&DefaultEntityRendererType) < 0)
 		return -1;
@@ -48,8 +55,14 @@ int entity_cleanup()
 		entity_deepcopy = nullptr;
 	}
 	if (entity_glMod) {
+		if (entity_glModLoadDict) {
+			Py_DECREF(entity_glModLoadDict);
+			entity_glModLoadDict = nullptr;
+		}
 		Py_DECREF(entity_glMod);
 		entity_glMod = nullptr;
+
+		DefaultEntityRenderer_cleanup();
 	}
 	return 0;
 }

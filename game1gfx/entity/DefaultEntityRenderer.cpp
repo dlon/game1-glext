@@ -8,16 +8,29 @@
 
 
 extern PyObject* entity_glMod;
+extern PyObject* entity_glModLoadDict;
 extern PyObject* entity_deepcopy;
+
+static PyObject *ParticleGroupRenderer = nullptr;
+
+int DefaultEntityRenderer_init()
+{
+	// TODO: obtain particle group renderer here somehow
+	return 0;
+}
+
+int DefaultEntityRenderer_cleanup()
+{
+	if (ParticleGroupRenderer) {
+		Py_DECREF(ParticleGroupRenderer);
+		ParticleGroupRenderer = nullptr;
+	}
+	return 0;
+}
 
 int loadSpriteDictionary(PyObject *dict)
 {
-	PyObject *loadDict = PyObject_GetAttrString(entity_glMod, "loadDictionary");
-	if (!loadDict)
-		return -1;
-
-	PyObject * ret = PyObject_CallFunctionObjArgs(loadDict, dict, NULL);
-	Py_DECREF(loadDict);
+	PyObject * ret = PyObject_CallFunctionObjArgs(entity_glModLoadDict, dict, NULL);
 	if (!ret)
 		return -1;
 	Py_DECREF(ret);
@@ -32,7 +45,7 @@ typedef struct {
 	PyObject *particleRenderers;
 } DefaultEntityRendererObject;
 
-static int DefaultEntityRenderer_init(DefaultEntityRendererObject *self, PyObject *args, PyObject *kwds)
+static int _DefaultEntityRenderer_init(DefaultEntityRendererObject *self, PyObject *args, PyObject *kwds)
 {
 	char* keywords[] = {
 		"entity",
@@ -81,39 +94,37 @@ static int DefaultEntityRenderer_init(DefaultEntityRendererObject *self, PyObjec
 			self.particleRenderers[var] =\
 				particles.ParticleGroupRenderer(cls)
 		*/
-		// TODO: do a relative import
-		PyObject *entityMod = PyImport_ImportModule("gfx.entity");
-		if (!entityMod)
-			return -1;
-		PyObject *particlesMod = PyObject_GetAttrString(entityMod, "particles");
-		Py_DECREF(entityMod);
-		if (!particlesMod)
-			return -1;
-		PyObject *ParticleGroupRenderer = PyObject_GetAttrString(particlesMod, "ParticleGroupRenderer");
-		if (!ParticleGroupRenderer) {
-			Py_DECREF(particlesMod);
-			return -1;
-		}
-
 		PyObject *particleTypes = PyObject_GetAttrString(self->entity, "particleTypes");
 		
 		PyObject *var, *cls;
 		Py_ssize_t pos = 0;
+
+		if (!ParticleGroupRenderer) {
+			// TODO: move to module init (fails currently)
+			// TODO: do a relative import (of entity mod?)
+			PyObject *entityMod = PyImport_ImportModule("gfx.entity");
+			if (!entityMod)
+				return -1;
+			PyObject *particlesMod = PyObject_GetAttrString(entityMod, "particles");
+			Py_DECREF(entityMod);
+			if (!particlesMod)
+				return -1;
+			ParticleGroupRenderer = PyObject_GetAttrString(particlesMod, "ParticleGroupRenderer");
+			Py_DECREF(particlesMod);
+			if (!ParticleGroupRenderer) {
+				return -1;
+			}
+		}
 
 		while (PyDict_Next(particleTypes, &pos, &var, &cls)) {
 			PyObject *particleRenderer = PyObject_CallFunctionObjArgs(ParticleGroupRenderer, cls, NULL);
 			if (!particleRenderer ||
 				PyDict_SetItem(self->particleRenderers, var, particleRenderer)) {
 				Py_XDECREF(particleRenderer);
-				Py_DECREF(ParticleGroupRenderer);
-				Py_DECREF(particlesMod);
 				return NULL;
 			}
 			Py_DECREF(particleRenderer);
 		}
-		
-		Py_DECREF(ParticleGroupRenderer);
-		Py_DECREF(particlesMod);
 	}
 
 	return 0;
@@ -502,7 +513,7 @@ PyTypeObject DefaultEntityRendererType = {
 	0, // tp_descr_get;
 	0, // tp_descr_set
 	0, // tp_dictoffset
-	(initproc)DefaultEntityRenderer_init, // tp_init
+	(initproc)_DefaultEntityRenderer_init, // tp_init
 	0, // tp_alloc
 	DefaultEntityRenderer_new, // tp_new
 };
