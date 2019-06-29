@@ -84,6 +84,9 @@ typedef struct {
 	PyObject *vertexDataView;
 } TileMapObject;
 
+static void TileMap_updateVerticesVBO(TileMapObject *self);
+
+
 static PyObject *TileMap_delete(TileMapObject *self, PyObject *noarg)
 {
 	// TODO: why not in dealloc?
@@ -95,7 +98,14 @@ static PyObject *TileMap_delete(TileMapObject *self, PyObject *noarg)
 
 static PyObject *TileMap_refresh(TileMapObject *self, PyObject *noarg)
 {
-	// TODO
+	PyTypeObject *base = Py_TYPE(self)->tp_base;
+	PyObject *ret = PyObject_CallMethod((PyObject*)base, "_updateArrays", "O", self);
+	if (!ret)
+		return NULL;
+	Py_DECREF(ret);
+
+	TileMap_updateVerticesVBO(self);
+
 	Py_RETURN_NONE;
 }
 
