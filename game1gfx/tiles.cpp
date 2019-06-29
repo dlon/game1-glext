@@ -60,6 +60,8 @@ void main(void) {
 }
 )";
 
+const int modelUniform = 2; // TODO: do not hardcode
+
 
 static PyTypeObject *TileMapBaseType = nullptr;
 
@@ -82,6 +84,9 @@ typedef struct {
 
 	PyObject *vertexDataObj;
 	PyObject *vertexDataView;
+
+	GLfloat camMatrix[3][3];
+	float ratio;
 } TileMapObject;
 
 static void TileMap_updateVerticesVBO(TileMapObject *self);
@@ -111,7 +116,36 @@ static PyObject *TileMap_refresh(TileMapObject *self, PyObject *noarg)
 
 static PyObject *TileMap_followCamera(TileMapObject *self, PyObject *args, PyObject *kw)
 {
-	// TODO
+	float parallax;
+	float x, y;
+
+	static char *keywords[] = {
+		"parallax",
+		"x",
+		"y",
+		nullptr
+	};
+
+	if (!PyArg_ParseTupleAndKeywords(args, kw, "fff", keywords,
+		&parallax, &x, &y))
+		return NULL;
+
+	self->program->use();
+
+	float xp = x * parallax;
+	float yp = y * parallax;
+
+	float ratio = self->ratio;
+	self->camMatrix[2][0] = -xp + fmod(xp, ratio);
+	self->camMatrix[2][1] = -yp + fmod(yp, ratio);
+
+	glUniformMatrix3fv(
+		modelUniform,
+		1,
+		GL_FALSE,
+		(GLfloat*)self->camMatrix
+	);
+
 	Py_RETURN_NONE;
 }
 
@@ -190,7 +224,6 @@ static int TileMap_setupShaders(TileMapObject *self)
 	// TODO: use compile-time values
 	const int texUniform = program->getUniformLocation("u_texture0");
 	const int texSizeUniform = program->getUniformLocation("uTexSize");
-	const int modelUniform = program->getUniformLocation("mMatrix");
 	const int viewProjectionUniform = program->getUniformLocation("vpMatrix");
 
 	// obtain configured surface size
@@ -202,9 +235,17 @@ static int TileMap_setupShaders(TileMapObject *self)
 	if (!configobj)
 		return -1;
 	PyObject *surfSizeobj = PyObject_GetAttrString(configobj, "surfaceSize");
-	Py_DECREF(configobj);
-	if (!surfSizeobj)
+	if (!surfSizeobj) {
+		Py_DECREF(configobj);
 		return -1;
+	}
+	PyObject *surfToScreenobj = PyObject_GetAttrString(configobj, "surfaceToScreen");
+	Py_DECREF(configobj);
+	if (!surfToScreenobj) {
+		return -1;
+	}
+	self->ratio = PyFloat_AsDouble(surfToScreenobj);
+	Py_DECREF(surfToScreenobj);
 
 	PyObject *widthobj = PySequence_GetItem(surfSizeobj, 0);
 	PyObject *heightobj = PySequence_GetItem(surfSizeobj, 1);
@@ -220,7 +261,6 @@ static int TileMap_setupShaders(TileMapObject *self)
 	Py_XDECREF(heightobj);
 
 	// set up matrices
-
 	GLfloat projectionMatrix[3][3] = {
 		{ 2.0f / width, 0, 0 },
 		{ 0, -2.0f / height, 0 },
@@ -250,16 +290,24 @@ static int TileMap_setupShaders(TileMapObject *self)
 		(GLfloat*)matrix
 	);
 	
-	GLfloat camMatrix[3][3] = {
-			{ 1, 0, 0 },
-			{ 0, 1, 0 },
-			{ 0, 0, 1 }
-	};
+	self->camMatrix[0][0] = 1;
+	self->camMatrix[0][1] = 0;
+	self->camMatrix[0][2] = 0;
+	self->camMatrix[1][0] = 0;
+	self->camMatrix[1][1] = 1;
+	self->camMatrix[1][2] = 0;
+	self->camMatrix[2][0] = 0;
+	self->camMatrix[2][1] = 0;
+	self->camMatrix[2][2] = 1;
+	/*{ 1, 0, 0 },
+	{ 0, 1, 0 },
+	{ 0, 0, 1 }*/
+
 	glUniformMatrix3fv(
 		modelUniform,
 		1,
 		GL_FALSE,
-		(GLfloat*)camMatrix
+		(GLfloat*)self->camMatrix
 	);
 
 	glUniform1i(texUniform, 0);
