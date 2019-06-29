@@ -18,6 +18,13 @@ public:
 	void use();
 
 	GLuint getGLProgram() { return program;  }
+	
+	GLint getAttribLocation(const char *name) {
+		return glGetAttribLocation(program, name);
+	}
+	GLint getUniformLocation(const char *name) {
+		return glGetUniformLocation(program, name);
+	}
 
 private:
 	const char *vertSrc;
