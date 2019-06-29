@@ -12,18 +12,21 @@ GLProgram::GLProgram(const char * vertSrc, const char * fragSrc, const char * ge
 
 GLProgram::~GLProgram()
 {
+	glDeleteShader(vertShader);
 	if (errorState ^ VERT_FAILED) {
-		glDeleteShader(vertShader);
+		return;
 	}
+	glDeleteShader(fragShader);
 	if (errorState ^ FRAG_FAILED) {
-		glDeleteShader(fragShader);
+		return;
 	}
-	if (geomSrc && errorState ^ GEOM_FAILED) {
+	if (geomSrc) {
 		glDeleteShader(geomShader);
+		if (errorState ^ GEOM_FAILED) {
+			return;
+		}
 	}
-	if (errorState ^ LINK_FAILED) {
-		glDeleteProgram(program);
-	}
+	glDeleteProgram(program);
 }
 
 static bool compileShader(GLenum shaderType, const char *src, GLuint *ret)
