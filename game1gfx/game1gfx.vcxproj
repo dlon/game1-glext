@@ -158,6 +158,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="array.cpp" />
     <ClCompile Include="batch.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="entity\DefaultEntityRenderer.cpp" />
@@ -186,6 +187,7 @@
     <ClCompile Include="tiles.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="array.h" />
     <ClInclude Include="batch.hpp" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="entity\DefaultEntityRenderer.h" />

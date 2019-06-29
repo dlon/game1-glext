@@ -10,6 +10,7 @@
 #include "entity.h"
 #include "glrenderer.h"
 #include "tiles.h"
+#include "array.h"
 
 
 extern "C" float surfaceWidth;
@@ -329,6 +330,9 @@ PyInit_glrenderer(void)
 	if (PyType_Ready(&glrenderer_TextureRegionType) < 0)
 		return NULL;
 	if (PyType_Ready(&ShapeBatch_type) < 0)
+		return NULL;
+
+	if (PyType_Ready(&glrenderer_CArrayType) < 0)
 		return NULL;
 
 	glrenderer_GraphicsError = PyErr_NewException(
