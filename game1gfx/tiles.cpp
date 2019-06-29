@@ -5,6 +5,7 @@
 #include <structmember.h>
 #include "GLProgram.h"
 #include <vector>
+#include "array.h"
 
 
 static const char *tileVShader = R"(#version 440
@@ -76,6 +77,9 @@ typedef struct {
 
 	GLuint vertexVbo;
 	std::vector<attributeType> *vertexAttribData;
+
+	PyObject *vertexDataObj;
+	PyObject *vertexDataView;
 } TileMapObject;
 
 static PyObject *TileMap_delete(TileMapObject *self, PyObject *noarg)
@@ -97,6 +101,11 @@ static PyObject *TileMap_followCamera(TileMapObject *self, PyObject *args, PyObj
 }
 
 
+PyMemberDef TileMap_members[] = {
+	{ "vboTileData", T_OBJECT, offsetof(TileMapObject, vertexDataView), READONLY, 0 },
+	{ NULL }
+};
+
 PyMethodDef TileMap_methods[] = {
 	{ "delete", (PyCFunction)TileMap_delete, METH_NOARGS, NULL },
 	{ "refresh", (PyCFunction)TileMap_refresh, METH_NOARGS, NULL },
@@ -116,6 +125,8 @@ static PyObject* TileMap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static void TileMap_dealloc(TileMapObject *self) {
+	Py_XDECREF(self->vertexDataView);
+	Py_XDECREF(self->vertexDataObj);
 	delete self->indices;
 	delete self->vertexAttribData;
 	Py_TYPE(self)->tp_free((PyObject*)self);
@@ -147,8 +158,7 @@ static int TileMap_init(TileMapObject *self, PyObject *args, PyObject *kwds)
 		return -1;
 	}
 
-	// FIXME: self->vertexAttribData must be accessible as a 2D array in Python
-	// the vertex data must be set up before the base; the rest later
+	// the vertex array must be set up before the base; the vertex VBO after
 	PyObject *maxTileBatchObj =
 		PyObject_GetAttrString((PyObject*)self, "maxTileBatch");
 	if (!maxTileBatchObj)
@@ -160,6 +170,22 @@ static int TileMap_init(TileMapObject *self, PyObject *args, PyObject *kwds)
 	
 	self->vertexAttribData->resize(4 * 8 * maxTileBatch);
 	glGenBuffers(1, &self->vertexVbo);
+
+	// create view for vertex data
+	Py_ssize_t shape[] = { maxTileBatch, 4 * 8 };
+	self->vertexDataObj = glrenderer_CArray_New(
+		self->vertexAttribData->data(),
+		"f",
+		sizeof(attributeType),
+		2,
+		shape
+	);
+	if (!self->vertexDataObj)
+		return -1;
+	self->vertexDataView =
+		PyMemoryView_FromObject(self->vertexDataObj);
+	if (!self->vertexDataView)
+		return -1;
 
 	// TODO: can we forgo this indirect call with a heap type object?
 	//       calling tp_base->tp_init causes recursion error
@@ -198,6 +224,7 @@ static PyType_Slot TileMap_slots[] = {
 	{ Py_tp_base, nullptr }, /* set in tiles_init */
 	{ Py_tp_init, TileMap_init },
 	{ Py_tp_methods, TileMap_methods },
+	{ Py_tp_members, TileMap_members },
 	{ Py_tp_new, TileMap_new },
 	{ Py_tp_dealloc, TileMap_dealloc },
 	{ 0 },
