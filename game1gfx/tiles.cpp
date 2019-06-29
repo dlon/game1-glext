@@ -1,5 +1,5 @@
 // TODO: implement TileMapLayer subclass and implement TileMapLayer.drawUsingVBO. from TileMapLayerBase
-
+// TODO: proper cleanup on failure
 
 #include <pyUtil.h>
 #include <structmember.h>
@@ -78,13 +78,18 @@ typedef struct {
 	GLuint vertexVbo;
 	std::vector<attributeType> *vertexAttribData;
 
+	unsigned int vao;
+
 	PyObject *vertexDataObj;
 	PyObject *vertexDataView;
 } TileMapObject;
 
 static PyObject *TileMap_delete(TileMapObject *self, PyObject *noarg)
 {
-	// TODO
+	// TODO: why not in dealloc?
+	glDeleteBuffers(1, &self->vertexVbo);
+	glDeleteBuffers(1, &self->indexVbo);
+	glDeleteVertexArrays(1, &self->vao);
 	Py_RETURN_NONE;
 }
 
@@ -100,17 +105,27 @@ static PyObject *TileMap_followCamera(TileMapObject *self, PyObject *args, PyObj
 	Py_RETURN_NONE;
 }
 
-
-PyMemberDef TileMap_members[] = {
-	{ "vboTileData", T_OBJECT, offsetof(TileMapObject, vertexDataView), READONLY, 0 },
-	{ NULL }
-};
-
 PyMethodDef TileMap_methods[] = {
 	{ "delete", (PyCFunction)TileMap_delete, METH_NOARGS, NULL },
 	{ "refresh", (PyCFunction)TileMap_refresh, METH_NOARGS, NULL },
 	{ "followCamera", (PyCFunction)TileMap_followCamera, METH_VARARGS | METH_KEYWORDS, NULL },
 	NULL
+};
+
+PyMemberDef TileMap_members[] = {
+	{ "vboTileData", T_OBJECT, offsetof(TileMapObject, vertexDataView), READONLY, 0 },
+	{ "vao", T_UINT, offsetof(TileMapObject, vao), READONLY, 0 },
+	{ NULL }
+};
+
+static PyObject *TileMap_getProgram(TileMapObject *self, void *closure)
+{
+	return PyLong_FromUnsignedLong(self->program->getGLProgram());
+}
+
+PyGetSetDef TileMap_getset[] = {
+	{ "program", (getter)TileMap_getProgram, (setter)nullptr, 0, 0 },
+	{ NULL }
 };
 
 static PyObject* TileMap_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
@@ -144,6 +159,160 @@ static void TileMap_updateVerticesVBO(TileMapObject *self)
 		self->vertexAttribData->data(),
 		GL_STATIC_DRAW
 	);
+}
+
+static int TileMap_setupShaders(TileMapObject *self)
+{
+	GLProgram *program = new GLProgram(
+		tileVShader,
+		tileFShader,
+		nullptr
+	);
+	if (!program->OK()) {
+		PyErr_SetString(
+			PyExc_RuntimeError,
+			program->getErrorMessage()
+		);
+		delete program;
+		return -1;
+	}
+
+	// TODO: use compile-time values
+	const int texUniform = program->getUniformLocation("u_texture0");
+	const int texSizeUniform = program->getUniformLocation("uTexSize");
+	const int modelUniform = program->getUniformLocation("mMatrix");
+	const int viewProjectionUniform = program->getUniformLocation("vpMatrix");
+
+	// obtain configured surface size
+	PyObject *gfxMod = PyImport_ImportModule("gfx");
+	if (!gfxMod)
+		return -1;
+	PyObject *configobj = PyObject_GetAttrString(gfxMod, "configuration");
+	Py_DECREF(gfxMod);
+	if (!configobj)
+		return -1;
+	PyObject *surfSizeobj = PyObject_GetAttrString(configobj, "surfaceSize");
+	Py_DECREF(configobj);
+	if (!surfSizeobj)
+		return -1;
+
+	PyObject *widthobj = PySequence_GetItem(surfSizeobj, 0);
+	PyObject *heightobj = PySequence_GetItem(surfSizeobj, 1);
+	Py_DECREF(surfSizeobj);
+	if (!widthobj || !heightobj) {
+		Py_XDECREF(widthobj);
+		Py_XDECREF(heightobj);
+		return -1;
+	}
+	float width = PyFloat_AsDouble(widthobj);
+	float height = PyFloat_AsDouble(heightobj);
+	Py_XDECREF(widthobj);
+	Py_XDECREF(heightobj);
+
+	// set up matrices
+
+	GLfloat projectionMatrix[3][3] = {
+		{ 2.0f / width, 0, 0 },
+		{ 0, -2.0f / height, 0 },
+		{ 0, 0, 1 }
+	};
+	GLfloat viewMatrix[3][3] = {
+		{ 1, 0, 0 },
+		{ 0, 1, 0 },
+		{ -160, -120, 1 }
+	};
+
+	GLfloat matrix[3][3] = { 0 };
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			for (int k = 0; k < 3; k++) {
+				matrix[i][j] += viewMatrix[i][j] * projectionMatrix[k][j];
+			}
+		}
+	}
+
+	program->use();
+
+	glUniformMatrix3fv(
+		viewProjectionUniform,
+		1,
+		GL_FALSE,
+		(GLfloat*)matrix
+	);
+	
+	GLfloat camMatrix[3][3] = {
+			{ 1, 0, 0 },
+			{ 0, 1, 0 },
+			{ 0, 0, 1 }
+	};
+	glUniformMatrix3fv(
+		modelUniform,
+		1,
+		GL_FALSE,
+		(GLfloat*)camMatrix
+	);
+
+	glUniform1i(texUniform, 0);
+
+	return 0;
+}
+
+static int TileMap_setupVAO(TileMapObject *self)
+{
+	glGenVertexArrays(1, &self->vao);
+	glBindVertexArray(self->vao);
+
+	self->program->use();
+
+	// TODO: at compile-time
+	const int positionAttrib = self->program->getAttribLocation("vPosition");
+	const int tilePosAttrib = self->program->getAttribLocation("vTilePos");
+	const int tileSizeAttrib = self->program->getAttribLocation("vTileSize");
+	const int tOffsetAttrib = self->program->getAttribLocation("vTOffset");
+
+	glEnableVertexAttribArray(tOffsetAttrib);
+	glEnableVertexAttribArray(tilePosAttrib);
+	glEnableVertexAttribArray(tileSizeAttrib);
+	glEnableVertexAttribArray(positionAttrib);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self->indexVbo);
+	glBindBuffer(GL_ARRAY_BUFFER, self->vertexVbo);
+
+	glVertexAttribPointer(
+		tOffsetAttrib,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		8 * sizeof(attributeType),
+		(const GLvoid*)(0 * sizeof(attributeType))
+	);
+	glVertexAttribPointer(
+		tilePosAttrib,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		8 * sizeof(attributeType),
+		(const GLvoid*)(2 * sizeof(attributeType))
+	);
+	glVertexAttribPointer(
+		tileSizeAttrib,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		8 * sizeof(attributeType),
+		(const GLvoid*)(4 * sizeof(attributeType))
+	);
+	glVertexAttribPointer(
+		positionAttrib,
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		8 * sizeof(attributeType),
+		(const GLvoid*)(6 * sizeof(attributeType))
+	);
+
+	glBindVertexArray(0);
+	return 0;
 }
 
 static int TileMap_init(TileMapObject *self, PyObject *args, PyObject *kwds)
@@ -214,8 +383,14 @@ static int TileMap_init(TileMapObject *self, PyObject *args, PyObject *kwds)
 	);
 
 	TileMap_updateVerticesVBO(self);
-	// TODO: create VAO
-	// TODO: set up shaders
+
+	if (TileMap_setupShaders(self)) {
+		return -1;
+	}
+
+	if (TileMap_setupVAO(self)) {
+		return -1;
+	}
 
 	return 0;
 }
@@ -224,6 +399,7 @@ static PyType_Slot TileMap_slots[] = {
 	{ Py_tp_base, nullptr }, /* set in tiles_init */
 	{ Py_tp_init, TileMap_init },
 	{ Py_tp_methods, TileMap_methods },
+	{ Py_tp_getset, TileMap_getset },
 	{ Py_tp_members, TileMap_members },
 	{ Py_tp_new, TileMap_new },
 	{ Py_tp_dealloc, TileMap_dealloc },
@@ -233,7 +409,7 @@ static PyType_Spec TileMap_spec = {
 	"TileMap",
 	sizeof(TileMapObject),
 	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_TYPE_SUBCLASS,
 	TileMap_slots
 };
 
