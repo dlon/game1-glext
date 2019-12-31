@@ -66,6 +66,10 @@ void GLProgram::link()
 	//	oops...
 
 	program = glCreateProgram();
+	if (program == 0) {
+		errorState = LINK_FAILED;
+		return;
+	}
 	glAttachShader(program, vertShader);
 	glAttachShader(program, fragShader);
 	if (geomSrc)
