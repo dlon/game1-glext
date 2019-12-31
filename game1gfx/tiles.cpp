@@ -220,10 +220,10 @@ static int TileMap_setupShaders(TileMapObject *self)
 		delete program;
 		return -1;
 	}
+	self->program = program;
 
 	// TODO: use compile-time values
 	const int texUniform = program->getUniformLocation("u_texture0");
-	const int texSizeUniform = program->getUniformLocation("uTexSize");
 	const int viewProjectionUniform = program->getUniformLocation("vpMatrix");
 
 	// obtain configured surface size
