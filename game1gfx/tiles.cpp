@@ -7,60 +7,71 @@
 #include <vector>
 #include "array.h"
 
+#define STRINGIFY(x) #x
+#define LOCATION_STR(x) STRINGIFY(x)
 
-static const char *tileVShader = R"(#version 440
+// Uniform locations
+#define VP_MATRIX_UNIFORM 0
+#define TEXTURE0_UNIFORM 1
+#define M_MATRIX_UNIFORM 2
+#define TEXTURE_SIZE_UNIFORM 3
 
-layout(location = 0) uniform mat3 vpMatrix;
-layout(location = 2) uniform mat3 mMatrix;
+// Attribute locations
+#define POSITION_ATTRIBUTE 0
+#define TILE_POSITION_ATTRIBUTE 1
+//#define VERTEX_COLOR_ATTRIBUTE 2
+#define TILE_SIZE_ATTRIBUTE 3
+#define TILE_OFFSET_ATTRIBUTE 4
 
-layout(location = 0) in vec2 vPosition;
-layout(location = 1) in vec2 vTilePos;
-//layout(location = 2) in vec4 vVertColor;
-layout(location = 3) in vec2 vTileSize;
-layout(location = 4) in vec2 vTOffset;
+static const char *tileVShader = "#version 440\n"
 
-//out vec4 vertColor;
-out vec2 tilePos;
-out vec2 tileSize;
-out vec2 tOffset;
+"layout(location = " LOCATION_STR(VP_MATRIX_UNIFORM) ") uniform mat3 vpMatrix;\n"
+"layout(location = " LOCATION_STR(M_MATRIX_UNIFORM) ") uniform mat3 mMatrix;\n"
 
-out vec2 pos;
+"layout(location = " LOCATION_STR(POSITION_ATTRIBUTE) ") in vec2 vPosition;\n"
+"layout(location = " LOCATION_STR(TILE_POSITION_ATTRIBUTE) ") in vec2 vTilePos;\n"
+//"layout(location = " LOCATION_STR(VERTEX_COLOR_ATTRIBUTE) ") in vec4 vVertColor;\n"
+"layout(location = " LOCATION_STR(TILE_SIZE_ATTRIBUTE) ") in vec2 vTileSize;\n"
+"layout(location = " LOCATION_STR(TILE_OFFSET_ATTRIBUTE) ") in vec2 vTOffset;\n"
 
-void main(void) {
-	gl_Position = vec4(vpMatrix * mMatrix * vec3(vPosition, 1.0), 1.0);
-	//vertColor = vVertColor;
-	pos = vPosition;
-	tilePos = vTilePos;
-	tileSize = vTileSize;
-	tOffset = vTOffset;
-}
-)";
+//"out vec4 vertColor;\n"
+"out vec2 tilePos;\n"
+"out vec2 tileSize;\n"
+"out vec2 tOffset;\n"
 
-static const char *tileFShader = R"(#version 440
+"out vec2 pos;\n"
 
-precision highp float;
+"void main(void) {"
+"	gl_Position = vec4(vpMatrix * mMatrix * vec3(vPosition, 1.0), 1.0);\n"
+//"	vertColor = vVertColor;\n"
+"	pos = vPosition;\n"
+"	tilePos = vTilePos;\n"
+"	tileSize = vTileSize;\n"
+"	tOffset = vTOffset;\n"
+"}";
 
-//in vec4 vertColor;
-in vec2 tilePos;
-in vec2 tileSize;
-in vec2 tOffset;
+static const char *tileFShader = "#version 440\n"
 
-in vec2 pos;
+"precision highp float;\n"
 
-layout(location = 1) uniform sampler2D u_texture0;
-layout(location = 3) uniform vec2 uTexSize;
+//"in vec4 vertColor;\n"
+"in vec2 tilePos;\n"
+"in vec2 tileSize;\n"
+"in vec2 tOffset;\n"
 
-layout(location = 0) out vec4 colorResult;
+"in vec2 pos;\n"
 
-void main(void) {
-	colorResult = texture2D(
-		u_texture0,
-		(tilePos + mod(pos - tOffset, tileSize)) / uTexSize
-	);
-}
-)";
+"layout(location = " LOCATION_STR(TEXTURE0_UNIFORM) ") uniform sampler2D u_texture0;\n"
+"layout(location = " LOCATION_STR(TEXTURE_SIZE_UNIFORM) ") uniform vec2 uTexSize;\n"
 
-const int modelUniform = 2; // TODO: do not hardcode
+"layout(location = 0) out vec4 colorResult;\n"
+
+"void main(void) {"
+"	colorResult = texture2D("
+"		u_texture0,"
+"		(tilePos + mod(pos - tOffset, tileSize)) / uTexSize"
+"	);\n"
+"}";
 
 
 static PyTypeObject *TileMapBaseType = nullptr;
@@ -139,7 +150,7 @@ static PyObject *TileMap_followCamera(TileMapObject *self, PyObject *args, PyObj
 	self->camMatrix[2][1] = -yp + fmod(yp, ratio);
 
 	glUniformMatrix3fv(
-		modelUniform,
+		M_MATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)self->camMatrix
@@ -219,10 +230,6 @@ static int TileMap_setupShaders(TileMapObject *self)
 	}
 	self->program = program;
 
-	// TODO: use compile-time values
-	const int texUniform = program->getUniformLocation("u_texture0");
-	const int viewProjectionUniform = program->getUniformLocation("vpMatrix");
-
 	// obtain configured surface size
 	PyObject *gfxMod = PyImport_ImportModule("gfx");
 	if (!gfxMod)
@@ -281,7 +288,7 @@ static int TileMap_setupShaders(TileMapObject *self)
 	program->use();
 
 	glUniformMatrix3fv(
-		viewProjectionUniform,
+		VP_MATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)matrix
@@ -301,13 +308,13 @@ static int TileMap_setupShaders(TileMapObject *self)
 	{ 0, 0, 1 }*/
 
 	glUniformMatrix3fv(
-		modelUniform,
+		M_MATRIX_UNIFORM,
 		1,
 		GL_FALSE,
 		(GLfloat*)self->camMatrix
 	);
 
-	glUniform1i(texUniform, 0);
+	glUniform1i(TEXTURE0_UNIFORM, 0);
 
 	return 0;
 }
@@ -319,22 +326,16 @@ static int TileMap_setupVAO(TileMapObject *self)
 
 	self->program->use();
 
-	// TODO: at compile-time
-	const int positionAttrib = self->program->getAttribLocation("vPosition");
-	const int tilePosAttrib = self->program->getAttribLocation("vTilePos");
-	const int tileSizeAttrib = self->program->getAttribLocation("vTileSize");
-	const int tOffsetAttrib = self->program->getAttribLocation("vTOffset");
-
-	glEnableVertexAttribArray(tOffsetAttrib);
-	glEnableVertexAttribArray(tilePosAttrib);
-	glEnableVertexAttribArray(tileSizeAttrib);
-	glEnableVertexAttribArray(positionAttrib);
+	glEnableVertexAttribArray(POSITION_ATTRIBUTE);
+	glEnableVertexAttribArray(TILE_POSITION_ATTRIBUTE);
+	glEnableVertexAttribArray(TILE_SIZE_ATTRIBUTE);
+	glEnableVertexAttribArray(TILE_OFFSET_ATTRIBUTE);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self->indexVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, self->vertexVbo);
 
 	glVertexAttribPointer(
-		tOffsetAttrib,
+		TILE_OFFSET_ATTRIBUTE,
 		2,
 		GL_FLOAT,
 		GL_FALSE,
@@ -342,7 +343,7 @@ static int TileMap_setupVAO(TileMapObject *self)
 		(const GLvoid*)(0 * sizeof(attributeType))
 	);
 	glVertexAttribPointer(
-		tilePosAttrib,
+		TILE_POSITION_ATTRIBUTE,
 		2,
 		GL_FLOAT,
 		GL_FALSE,
@@ -350,7 +351,7 @@ static int TileMap_setupVAO(TileMapObject *self)
 		(const GLvoid*)(2 * sizeof(attributeType))
 	);
 	glVertexAttribPointer(
-		tileSizeAttrib,
+		TILE_SIZE_ATTRIBUTE,
 		2,
 		GL_FLOAT,
 		GL_FALSE,
@@ -358,7 +359,7 @@ static int TileMap_setupVAO(TileMapObject *self)
 		(const GLvoid*)(4 * sizeof(attributeType))
 	);
 	glVertexAttribPointer(
-		positionAttrib,
+		POSITION_ATTRIBUTE,
 		2,
 		GL_FLOAT,
 		GL_FALSE,
