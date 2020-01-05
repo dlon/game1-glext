@@ -71,16 +71,15 @@ typedef GLushort indexType;
 
 
 typedef struct {
-	PyObject_HEAD
+	PyObject_VAR_HEAD
 	GLProgram *program;
 
 	GLuint indexVbo;
-	std::vector<indexType> *indices;
 
 	GLuint vertexVbo;
 	std::vector<attributeType> *vertexAttribData;
 
-	unsigned int vao;
+	GLuint vao;
 
 	PyObject *vertexDataObj;
 	PyObject *vertexDataView;
@@ -177,7 +176,6 @@ static PyObject* TileMap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	if (self == NULL)
 		return NULL;
 	
-	self->indices = new std::vector<indexType>;
 	self->vertexAttribData = new std::vector<attributeType>;
 
 	return (PyObject*)self;
@@ -186,7 +184,6 @@ static PyObject* TileMap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static void TileMap_dealloc(TileMapObject *self) {
 	Py_XDECREF(self->vertexDataView);
 	Py_XDECREF(self->vertexDataObj);
-	delete self->indices;
 	delete self->vertexAttribData;
 	Py_TYPE(self)->tp_free((PyObject*)self);
 }
@@ -394,7 +391,7 @@ static int TileMap_init(TileMapObject *self, PyObject *args, PyObject *kwds)
 	Py_DECREF(maxTileBatchObj);
 	if (PyErr_Occurred())
 		return -1;
-	
+
 	self->vertexAttribData->resize(4 * 8 * maxTileBatch);
 	glGenBuffers(1, &self->vertexVbo);
 
@@ -421,22 +418,23 @@ static int TileMap_init(TileMapObject *self, PyObject *args, PyObject *kwds)
 		return -1;
 
 	// set up index vbo
+	std::vector<indexType> indices;
+	indices.resize(6 * maxTileBatch);
+	for (int index = 0; index < maxTileBatch; index++) {
+		indices[6 * index + 0] = 4 * index + 0;
+		indices[6 * index + 1] = 4 * index + 2;
+		indices[6 * index + 2] = 4 * index + 1;
+		indices[6 * index + 3] = 4 * index + 2;
+		indices[6 * index + 4] = 4 * index + 1;
+		indices[6 * index + 5] = 4 * index + 3;
+	}
+
 	glGenBuffers(1, &self->indexVbo);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self->indexVbo);
-
-	self->indices->resize(6 * maxTileBatch);
-	for (int index = 0; index < maxTileBatch; index++) {
-		(*self->indices)[4 * index + 0] = 4 * index + 0;
-		(*self->indices)[4 * index + 1] = 4 * index + 2;
-		(*self->indices)[4 * index + 2] = 4 * index + 1;
-		(*self->indices)[4 * index + 3] = 4 * index + 2;
-		(*self->indices)[4 * index + 4] = 4 * index + 1;
-		(*self->indices)[4 * index + 5] = 4 * index + 3;
-	}
 	glBufferData(
 		GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(indexType) * self->indices->size(),
-		self->indices->data(),
+		sizeof(indexType) * indices.size(),
+		indices.data(),
 		GL_STATIC_DRAW
 	);
 
@@ -467,7 +465,7 @@ static PyType_Spec TileMap_spec = {
 	"TileMap",
 	sizeof(TileMapObject),
 	0,
-	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_TYPE_SUBCLASS,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HEAPTYPE,
 	TileMap_slots
 };
 
@@ -508,11 +506,9 @@ tiles_init()
 		return NULL;
 
 	TileMap_slots[0].pfunc = TileMapBaseType;
-	PyObject *TileMapType =
-		PyType_FromSpec(&TileMap_spec);
 
-	if (PyType_Ready((PyTypeObject*)TileMapType) < 0)
-		return NULL;
+	PyObject *TileMapType =
+		PyType_FromSpecWithBases(&TileMap_spec, nullptr);
 
 	if (PyModule_AddObject(
 		mod,
